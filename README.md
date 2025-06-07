@@ -4,8 +4,17 @@ On making an app with multiple windows: https://electron-vite.org/guide/dev#mult
 
 Vite Overview: https://vite.dev/guide/#overview
 
+### Setup of a local repos (off  the top of my head)
+1. Clone this repository using a method of your choice
+2. Make sure Node v.20+ is installed
+3. Open the project folder in VS Code
+4. Open a new Terminal in VS Code
+5. Run `npm install`
+6. After that ran through and and no errors popped up, you should be able to run `npm run dev` to run the app with (mostly) functioning hot-reloading
 
-Setup:
+
+
+### Setup of new electron-vite app
 1. Make sure Node v.20+ is installed
 2. Open the Terminal in VS Code after navigating to the project folder
 3. Run the latest electron-vite setup: npm create @quick-start/electron@latest
