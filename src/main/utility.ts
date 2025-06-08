@@ -13,13 +13,15 @@ export function createOverlayWindow(width: number, height: number, x: number, y:
         transparent: true,
         alwaysOnTop: true,
         skipTaskbar: true,
+        titleBarStyle: 'hidden',
         resizable: false,
         hasShadow: false,
         focusable: focusable,
         webPreferences: {
-        preload: join(__dirname, '../preload/index.js'),
-        nodeIntegration: false,
-        contextIsolation: true,
+            preload: join(__dirname, '../preload/index.js'),
+            nodeIntegration: false,
+            contextIsolation: true,
+            sandbox: false,
         },
     });
 

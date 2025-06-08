@@ -1,9 +1,9 @@
 import { createServer } from "http";
 import { URL } from "url";
-import { mainWindow } from ".";
 import { app, shell } from "electron";
 import { writeFileSync, readFileSync } from 'fs'
 import path from "path";
+import { setLoggedInState, showOutput } from ".";
 
 const clientId = "99e38fb1a67b4588b75b9498eda217a6";
 const clientSecret = "e53cf04f50734db9a06373e95b8deed5";
@@ -21,12 +21,14 @@ const authUrl = `https://accounts.spotify.com/authorize?response_type=code&clien
 const tokenPath = path.join(app.getPath('userData'), 'tokens.json');
 
 function saveTokens(tokens: TokenResponse) {
-  writeFileSync(tokenPath, JSON.stringify(tokens))
+  writeFileSync(tokenPath, JSON.stringify(tokens));
+  console.log("Saved tokens (at AppData/Roaming/[App Name] for windows)");
 }
 
 function loadTokens(): TokenResponse | null {
   try {
-    return JSON.parse(readFileSync(tokenPath, 'utf-8'))
+    const jsonData = JSON.parse(readFileSync(tokenPath, 'utf-8'));
+    return new TokenResponse(jsonData, true);
   } catch {
     return null
   }
@@ -34,23 +36,42 @@ function loadTokens(): TokenResponse | null {
 
 async function ensureToken(): Promise<string> {
   const tokens = loadTokens();
+  console.log("loaded tokens");
 
-  if (!tokens) {
+  let accessToken: string | null;
+
+  if (tokens == null || tokens == undefined) {
+    console.log("no tokens to load, starting auth code flow");
+    showOutput("No tokens to load, starting auth code flow");
     const code = await getAuthCode();
-    return await getAccessTokenFromAuthCode(code);
+    accessToken = await getAccessTokenFromAuthCode(code);
+  }
+  else if (!tokens.isExpired()) {
+    console.log("Got token: " + tokens.access_token);
+    showOutput("Got token, not expired");
+    accessToken = tokens.access_token;
+  }
+  else {
+    console.log("Tokens expired");
+
+    accessToken = await getAccessTokenFromRefresh(tokens.refresh_token);
+    if (accessToken === null) {
+      console.log("\nCould not get access token from refresh token. Starting auth code flow.");
+      showOutput("Error when trying to use refresh token, starting auth code flow");
+      const code = await getAuthCode();
+      accessToken = await getAccessTokenFromAuthCode(code);
+    }
+    showOutput("Got token from refresh");
   }
 
-  if (!tokens.isExpired()) {
-    return tokens.access_token;
-  }
-
-  return await getAccessTokenFromRefresh(tokens.refresh_token);
+  setLoggedInState(!!accessToken);
+  return accessToken;
 }
 //#endregion
 
 export async function startSpotifyAuthFlow(): Promise<void> {
+  console.log("\nStarting spotify auth flow");
   await ensureToken();
-  mainWindow?.webContents.send("spotify-token", true);
 }
 
 
@@ -101,13 +122,13 @@ async function getAccessTokenFromAuthCode(code: string): Promise<string> {
   });
 
   const rawData = await tokenRes.json();
-  const tokenData = new TokenResponse(rawData);
-  console.log("Spotify Tokens:", tokenData);
+  const tokenData = new TokenResponse(rawData, false);
+  console.log("Got Spotify Tokens from auth code flow");
   saveTokens(tokenData);
   return tokenData.access_token;
 }
 
-async function getAccessTokenFromRefresh(refresh_token: string): Promise<string> {
+async function getAccessTokenFromRefresh(refresh_token: string): Promise<string | null> {
   const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
@@ -120,8 +141,13 @@ async function getAccessTokenFromRefresh(refresh_token: string): Promise<string>
     }),
   });
 
+  if (tokenRes.status !== 200) {
+    console.log("Error while requesting access token through refresh token: ", tokenRes.status, + ": ", tokenRes.statusText);
+    return null;
+  }
+
   const rawData = await tokenRes.json();
-  const tokenData = new TokenResponse(rawData);
+  const tokenData = new TokenResponse(rawData, false);
   saveTokens(tokenData);
 
   return tokenData.access_token;
@@ -135,7 +161,7 @@ class TokenResponse {
   scope: string;
   fetchedAt: number;
 
-  constructor(data: any) {
+  constructor(data: any, loadedFromSave: boolean) {
     if (!TokenResponse.isTokenResponse(data)) {
       throw new Error("Invalid token response data");
     }
@@ -144,22 +170,36 @@ class TokenResponse {
     this.expires_in = data.expires_in;
     this.refresh_token = data.refresh_token;
     this.scope = data.scope;
-    this.fetchedAt = Date.now()
+
+    if (loadedFromSave) {
+      this.fetchedAt = data.fetchedAt;
+    } else {
+      this.fetchedAt = Date.now()
+    }
+    
     Object.freeze(this)
   }
 
-  static isTokenResponse(data: any): data is TokenResponse {
-    return (
+  public static isTokenResponse(data: any): data is TokenResponse {
+    const isToken: boolean =  (
       typeof data.access_token === 'string' &&
       typeof data.expires_in === 'number' &&
       typeof data.refresh_token === 'string' &&
       typeof data.scope === 'string'
     );
+
+    if (!isToken) {
+      console.log("isTokenResponse: false -> \n", data);
+    }
+    return isToken;
   }
 
-  isExpired(): boolean {
+  public isExpired(): boolean {
     const current: number = Date.now();
 
+    console.log("Token time left: " + (this.fetchedAt + this.expires_in - current));
+    console.log("Fetched at: ", this.fetchedAt);
+    console.log("Current: ", current);
     // 3 sec extra buffer
     return this.fetchedAt + this.expires_in - 3 < current;
   }

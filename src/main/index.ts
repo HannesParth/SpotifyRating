@@ -1,51 +1,59 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
 
 import { startSpotifyAuthFlow } from './spotifyAPI';
 import { createOverlayWindow } from './utility';
 
-export let mainWindow: BrowserWindow;
+let outputOverlay: BrowserWindow;
+let loginOverlay: BrowserWindow;
 
 const devURL = "http://localhost:5173";
 
-function createWindow(): void {
-  // Create the browser window.
-  mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    show: false,
-    autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
-    }
-  })
+// function createWindow(): void {
+//   // Create the browser window.
+//   mainWindow = new BrowserWindow({
+//     width: 900,
+//     height: 670,
+//     show: false,
+//     autoHideMenuBar: true,
+//     ...(process.platform === 'linux' ? { icon } : {}),
+//     webPreferences: {
+//       preload: join(__dirname, '../preload/index.js'),
+//       sandbox: false
+//     }
+//   })
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+//   mainWindow.on('ready-to-show', () => {
+//     mainWindow.show()
+//   })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+//   mainWindow.webContents.setWindowOpenHandler((details) => {
+//     shell.openExternal(details.url)
+//     return { action: 'deny' }
+//   })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-  } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
-  }
+//   // HMR for renderer base on electron-vite cli.
+//   // Load the remote URL for development or the local html file for production.
+//   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+//     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+//   } else {
+//     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+//   }
+// }
+
+export function showOutput(msg: string): void {
+  outputOverlay.webContents.send('display-output', msg);
+}
+
+export function setLoggedInState(state: boolean): void {
+  loginOverlay.webContents.send('set-sign-in-state', state);
 }
 
 function createOverlay(): void {
-  const loginOverlay: BrowserWindow = createOverlayWindow(110, 50, 1500, 10);
-  const songRateOverlay: BrowserWindow = createOverlayWindow(120, 50, 200, 1000);
-  const outputOverlay: BrowserWindow = createOverlayWindow(300, 200, 1600, 900, true);
+  loginOverlay = createOverlayWindow(120, 50, 1500, 10);
+  const songRateOverlay: BrowserWindow = createOverlayWindow(120, 50, 300, 975);
+  outputOverlay = createOverlayWindow(300, 200, 1600, 800);
 
   if (is.dev) {
     loginOverlay.loadURL(`${devURL}/login.html`);
@@ -80,11 +88,11 @@ app.whenReady().then(() => {
   //createWindow()
   createOverlay()
 
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+  // app.on('activate', function () {
+  //   // On macOS it's common to re-create a window in the app when the
+  //   // dock icon is clicked and there are no other windows open.
+  //   if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  // })
 })
 
 // Quit when all windows are closed, except on macOS. There, it's common
@@ -101,4 +109,9 @@ app.on('window-all-closed', () => {
 
 ipcMain.handle('start-spotify-auth', () => {
   startSpotifyAuthFlow();
+});
+
+
+ipcMain.on('display-output', (_, errorMessage) => {
+  outputOverlay.webContents.send('display-output', errorMessage);
 });

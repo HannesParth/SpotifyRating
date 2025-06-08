@@ -1,21 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import '../assets/main.css'
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 
-function OutputWindow(): React.JSX.Element {
-    // Todo: place all this into an extra, selectable window so we can use the console
-    const [error, setError] = useState<string | null>(null)
+export function showOutput(msg: string) {
+  window.electron.ipcRenderer.send('display-output', msg);
+}
 
-    console.log("Called LoginButton");
-    return (
-        <div>
-            <h6>Output</h6>
-            {error && <p>{error}</p>}
-        </div>
-    );
+
+function OutputWindow(): React.JSX.Element {
+  const [output, setOutput] = useState<string[]>([]);
+
+  useEffect(() => {
+    window.electron.ipcRenderer.on('display-output', (_, msg: string) => {
+      setOutput(prev => [...prev, msg]);
+    });
+
+    return () => {
+      window.electron.ipcRenderer.removeAllListeners('display-output');
+    };
+  }, []);
+
+
+  return (
+    <div style={{
+      maxHeight: '100%',
+      overflowY: 'auto',
+      padding: '10px',
+    }}>
+      <h5>Output</h5>
+      {output.map((line, index) => (
+        <p key={index} style={{ color: 'white', margin: 0 }}>{line}</p>
+      ))}
+    </div>
+  );
 }
 
 
