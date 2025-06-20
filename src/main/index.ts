@@ -51,9 +51,9 @@ export function setLoggedInState(state: boolean): void {
 }
 
 function createOverlay(): void {
-  loginOverlay = createOverlayWindow(120, 50, 1500, 10);
-  const songRateOverlay: BrowserWindow = createOverlayWindow(120, 50, 300, 975);
-  outputOverlay = createOverlayWindow(300, 200, 1600, 800);
+  loginOverlay = createOverlayWindow(120, 50, '70%', '1%');
+  const songRateOverlay: BrowserWindow = createOverlayWindow(120, 50, '20%', '95%');
+  outputOverlay = createOverlayWindow(300, 200, '80%', '70%');
 
   if (is.dev) {
     loginOverlay.loadURL(`${devURL}/login.html`);
