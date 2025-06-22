@@ -22,9 +22,8 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^4.0.0",
-    "@spotify/web-api-ts-sdk": "^1.2.0",
     "electron-updater": "^6.3.9",
-    "spotify-api.js": "^9.2.5"
+    "spotify-web-api-node": "^5.0.2"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
@@ -32,6 +31,7 @@
     "@types/node": "^22.14.1",
     "@types/react": "^19.1.1",
     "@types/react-dom": "^19.1.2",
+    "@types/spotify-web-api-node": "^5.0.11",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^35.1.5",
     "electron-builder": "^25.1.8",

@@ -5,16 +5,27 @@ import { writeFileSync, readFileSync } from 'fs'
 import path from "path";
 import { setLoggedInState, showOutput } from ".";
 
+// To read more about the used package: https://www.npmjs.com/package/spotify-web-api-node?activeTab=readme
+import SpotifyWebApi from 'spotify-web-api-node';
+
 const clientId = "99e38fb1a67b4588b75b9498eda217a6";
 const clientSecret = "e53cf04f50734db9a06373e95b8deed5";
 
 const redirectURI = "http://127.0.0.1:8000/callback";
+
+
+var spotifyApi = new SpotifyWebApi({
+  clientId: clientId,
+  clientSecret: clientSecret,
+  redirectUri: redirectURI,
+});
+
 const scopes = [
   'playlist-read-private',
   'playlist-modify-public',
   'playlist-modify-private'
-].join(' ');
-const authUrl = `https://accounts.spotify.com/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectURI)}&scope=${encodeURIComponent(scopes)}`;
+];
+const authUrl = spotifyApi.createAuthorizeURL(scopes, 'state-key');
 
 
 //#region Tokens
@@ -36,33 +47,31 @@ function loadTokens(): TokenResponse | null {
   }
 }
 
-async function ensureToken(): Promise<string> {
+async function ensureToken(): Promise<string | null> {
   const tokens = loadTokens();
   console.log("loaded tokens");
 
-  let accessToken: string | null;
+  let accessToken: string | null = null;
 
   if (tokens == null || tokens == undefined) {
     console.log("Loaded null tokens, starting auth code flow");
     showOutput("Loaded null tokens, starting auth code flow");
-    const code = await getAuthCode();
-    accessToken = await getAccessTokenFromAuthCode(code);
+    await getAuthCode();
+    accessToken = spotifyApi.getAccessToken()!;
   }
   else if (!tokens.isExpired()) {
     console.log("Got token: " + tokens.access_token);
     showOutput("Got token, not expired");
     accessToken = tokens.access_token;
+    spotifyApi.setAccessToken(tokens.access_token);
+    spotifyApi.setRefreshToken(tokens.refresh_token);
   }
   else {
     console.log("Tokens expired");
 
-    accessToken = await getAccessTokenFromRefresh(tokens.refresh_token);
-    if (accessToken === null) {
-      console.log("\nCould not get access token from refresh token. Starting auth code flow.");
-      showOutput("Error when trying to use refresh token, starting auth code flow");
-      const code = await getAuthCode();
-      accessToken = await getAccessTokenFromAuthCode(code);
-    }
+    spotifyApi.setRefreshToken(tokens.refresh_token);
+    await spotifyApi.refreshAccessToken();
+    accessToken = spotifyApi.getAccessToken()!;
     showOutput("Got token from refresh");
   }
 
@@ -79,9 +88,18 @@ export async function startSpotifyAuthFlow(): Promise<void> {
 
 async function getAuthCode(): Promise<string> {
   return new Promise((resolve, reject) => {
-    const server = createServer((req, res) => {
+    const server = createServer(async (req, res) => {
       const url = new URL(req.url || "", redirectURI);
-      const code = url.searchParams.get("code");
+      const code = url.searchParams.get("code")!;
+
+      const data = await spotifyApi.authorizationCodeGrant(code);
+      const access_token = data.body['access_token'];
+      const refresh_token = data.body['refresh_token'];
+
+      spotifyApi.setAccessToken(access_token);
+      spotifyApi.setRefreshToken(refresh_token);
+
+      console.log('Access Token:', access_token);
 
       res.writeHead(200, { "Content-Type": "text/html" });
       res.end("<h1>Login successful. You can now close the window.</h1>");
@@ -107,55 +125,7 @@ async function getAuthCode(): Promise<string> {
   });
 }
 
-async function getAccessTokenFromAuthCode(code: string): Promise<string> {
-  // Exchange auth code for access token
-  const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization:
-        "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
-    },
-    body: new URLSearchParams({
-      grant_type: "authorization_code",
-      code,
-      redirect_uri: redirectURI, // just for validation
-    }),
-  });
 
-  const rawData = await tokenRes.json();
-  const tokenData = new TokenResponse(rawData, false);
-  console.log("Got Spotify Tokens from auth code flow");
-  saveTokens(tokenData);
-  return tokenData.access_token;
-}
-
-async function getAccessTokenFromRefresh(refresh_token: string): Promise<string | null> {
-  const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization:
-        "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
-    },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      refresh_token: refresh_token,
-      //client_id: clientId,
-    }),
-  });
-
-  if (tokenRes.status !== 200) {
-    console.log("Error while requesting access token through refresh token: ", tokenRes.status, + ": ", tokenRes.statusText);
-    return null;
-  }
-
-  const rawData = await tokenRes.json();
-  const tokenData = new TokenResponse(rawData, false);
-  saveTokens(tokenData);
-
-  return tokenData.access_token;
-}
 
 
 class TokenResponse {
