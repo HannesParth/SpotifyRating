@@ -7,8 +7,21 @@ import { createOverlayWindow } from './utility';
 
 let outputOverlay: BrowserWindow;
 let loginOverlay: BrowserWindow;
+let songRateOverlay: BrowserWindow;
+let setPlaylistOverlay: BrowserWindow;
 
 const devURL = "http://localhost:5173";
+
+
+const setPlaylistButtonSize = {
+  width: 140,
+  height: 45,
+}
+
+const setPlaylistWithInputSize = {
+  width: 200,
+  height: 130,
+}
 
 // function createWindow(): void {
 //   // Create the browser window.
@@ -48,21 +61,29 @@ export function showOutput(msg: string): void {
 
 export function setLoggedInState(state: boolean): void {
   loginOverlay.webContents.send('set-sign-in-state', state);
+  setPlaylistOverlay.webContents.send('set-sign-in-state', state);
 }
 
 function createOverlay(): void {
-  loginOverlay = createOverlayWindow(120, 50, '70%', '1%');
-  const songRateOverlay: BrowserWindow = createOverlayWindow(120, 50, '20%', '95%');
+  loginOverlay = createOverlayWindow(115, 46, '70%', '1%');
+  songRateOverlay = createOverlayWindow(80, 30, '20%', '92%');
   outputOverlay = createOverlayWindow(300, 200, '80%', '70%');
+  setPlaylistOverlay = createOverlayWindow(
+    setPlaylistButtonSize.width, 
+    setPlaylistButtonSize.height, 
+    '23%', '1%'
+  );
 
   if (is.dev) {
     loginOverlay.loadURL(`${devURL}/login.html`);
     songRateOverlay.loadURL(`${devURL}/songRate.html`);
     outputOverlay.loadURL(`${devURL}/outputWindow.html`);
+    setPlaylistOverlay.loadURL(`${devURL}/setPlaylist.html`)
   } else {
     loginOverlay.loadFile(join(__dirname, "../renderer/login.html"));
     songRateOverlay.loadFile(join(__dirname, "../renderer/songRate.html"));
     songRateOverlay.loadFile(join(__dirname, "../renderer/outputWindow.html"));
+    setPlaylistOverlay.loadFile(join(__dirname, "../renderer/setPlaylist.html"))
   }
 
   console.log("Created overlay windows");
@@ -104,14 +125,67 @@ app.on('window-all-closed', () => {
   }
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
 
+
+// Called when the Login Button is pressed
 ipcMain.handle('start-spotify-auth', () => {
   startSpotifyAuthFlow();
 });
 
 
+// Bridge between any other windows and the output window
 ipcMain.on('display-output', (_, errorMessage) => {
   outputOverlay.webContents.send('display-output', errorMessage);
+});
+
+
+// Called when the Set Playlist input popup should be shown or hidden
+ipcMain.on('resize-set-playlist', (_, withInput: boolean) => {
+  setPlaylistOverlay.setResizable(true);
+
+  if (withInput) {
+    setPlaylistOverlay.setSize(setPlaylistWithInputSize.width, setPlaylistWithInputSize.height);
+    setPlaylistOverlay.setFocusable(true);
+  } else {
+    setPlaylistOverlay.setSize(setPlaylistButtonSize.width, setPlaylistButtonSize.height);
+    setPlaylistOverlay.setFocusable(false);
+  }
+
+  setPlaylistOverlay.setResizable(false);
+});
+
+
+
+ipcMain.on('choose-managed-playlist', (_, playlistName: string) => {
+  console.log("Got name of playlist to manage: " + playlistName);
+});
+
+
+
+// If not ALL windows are focusable = false while transparent = true, windows will always show 
+// an ugly title bar behind everything when the window loses focus. 
+// This title bar cannot be manually removed, but for some reason is gets hidden 
+// when the window gets resized
+app.on('browser-window-blur', () => {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) {
+      const [w, h] = win.getSize();
+      win.setResizable(true);
+      win.setSize(w, h + 1);
+      win.setSize(w, h);
+      win.setResizable(false);
+    }
+  }
+});
+
+app.on('browser-window-focus', () => {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) {
+      const [w, h] = win.getSize();
+      win.setResizable(true);
+      win.setSize(w, h + 1);
+      win.setSize(w, h);
+      win.setResizable(false);
+    }
+  }
 });

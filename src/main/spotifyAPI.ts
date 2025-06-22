@@ -21,6 +21,8 @@ const authUrl = `https://accounts.spotify.com/authorize?response_type=code&clien
 const tokenPath = path.join(app.getPath('userData'), 'tokens.json');
 
 function saveTokens(tokens: TokenResponse) {
+  console.log("Saving tokens temporarily disabled because fucky");
+  return;
   writeFileSync(tokenPath, JSON.stringify(tokens));
   console.log("Saved tokens (at AppData/Roaming/[App Name] for windows)");
 }
@@ -41,8 +43,8 @@ async function ensureToken(): Promise<string> {
   let accessToken: string | null;
 
   if (tokens == null || tokens == undefined) {
-    console.log("no tokens to load, starting auth code flow");
-    showOutput("No tokens to load, starting auth code flow");
+    console.log("Loaded null tokens, starting auth code flow");
+    showOutput("Loaded null tokens, starting auth code flow");
     const code = await getAuthCode();
     accessToken = await getAccessTokenFromAuthCode(code);
   }
@@ -132,12 +134,14 @@ async function getAccessTokenFromRefresh(refresh_token: string): Promise<string 
   const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
+      "Content-Type": "application/x-www-form-urlencoded",
+      Authorization:
+        "Basic " + Buffer.from(`${clientId}:${clientSecret}`).toString("base64"),
     },
     body: new URLSearchParams({
       grant_type: "refresh_token",
       refresh_token: refresh_token,
-      client_id: clientId,
+      //client_id: clientId,
     }),
   });
 

@@ -7,7 +7,6 @@ export function createOverlayWindow(
   height: number,
   x: number,
   y: number,
-  focusable?: boolean
 ): BrowserWindow;
 
 export function createOverlayWindow(
@@ -15,7 +14,6 @@ export function createOverlayWindow(
   height: number,
   xPercent: `${number}%`,
   yPercent: `${number}%`,
-  focusable?: boolean
 ): BrowserWindow;
 
 export function createOverlayWindow(
@@ -23,7 +21,6 @@ export function createOverlayWindow(
   height: number,
   x: number | `${number}%`,
   y: number | `${number}%`,
-  focusable: boolean = false,
   parent?: BrowserWindow | undefined
 ): BrowserWindow {
     const display = screen.getPrimaryDisplay();
@@ -55,7 +52,7 @@ export function createOverlayWindow(
         titleBarStyle: 'hidden',
         resizable: false,
         hasShadow: false,
-        focusable: focusable,
+        focusable: true,
         parent: parent,
         webPreferences: {
             preload: join(__dirname, '../preload/index.js'),
@@ -66,9 +63,8 @@ export function createOverlayWindow(
     });
 
     overlay.on('ready-to-show', () => {
-        overlay.show()
+        overlay.show();
     });
 
-    return overlay;
+  return overlay;
 }
-
