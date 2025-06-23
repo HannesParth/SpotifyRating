@@ -1,6 +1,6 @@
 import { createServer } from "http";
 import { URL } from "url";
-import { app, shell } from "electron";
+import { app, shell, ipcMain } from "electron";
 import { writeFileSync, readFileSync } from 'fs'
 import path from "path";
 import { setLoggedInState, showOutput } from ".";
@@ -27,6 +27,16 @@ const scopes = [
 ];
 const authUrl = spotifyApi.createAuthorizeURL(scopes, 'state-key');
 
+//#region Playlist
+function getPlaylist(playlistName: any) {
+  return playlistName
+}
+
+ipcMain.on('choose-managed-playlist', (_: any, playlistName: any) => {
+  getPlaylist(playlistName);
+  console.log("Got playlist: " + playlistName);
+});
+//#endregion
 
 //#region Tokens
 const tokenPath = path.join(app.getPath('userData'), 'tokens.json');
