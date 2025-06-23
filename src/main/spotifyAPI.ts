@@ -35,7 +35,32 @@ function getPlaylist(playlistName: any) {
 ipcMain.on('choose-managed-playlist', (_: any, playlistName: any) => {
   getPlaylist(playlistName);
   console.log("Got playlist: " + playlistName);
+  let user = getUser();
+  let allPlaylist = getAllPlaylist(user.id);
+  console.log("Got all playlists from user: " + allPlaylist);
 });
+
+function getUser(): data.body {
+  // Get the authenticated user
+  spotifyApi.getMe()
+  .then(function(data) {
+    console.log('Some information about the authenticated user', data.body);
+    return data.body;
+  }, function(err) {
+    console.log('Something went wrong!', err);
+  });
+}
+
+function getAllPlaylist(userID) {
+// Get a user's playlists
+spotifyApi.getUserPlaylists(userID)
+  .then(function(data) {
+    console.log('Retrieved playlists', data.body);
+  },function(err) {
+    console.log('Something went wrong!', err);
+  });
+}
+
 //#endregion
 
 //#region Tokens
