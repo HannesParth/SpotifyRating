@@ -1,7 +1,7 @@
 
 import { BrowserWindow, ipcMain } from 'electron';
 import { is } from '@electron-toolkit/utils'
-import { createOverlayWindow } from './utility';
+import { createOverlayWindow, InfoPopupData } from './utility';
 import { join } from 'path'
 
 
@@ -9,6 +9,7 @@ export let outputOverlay: BrowserWindow;
 export let loginOverlay: BrowserWindow;
 export let songRateOverlay: BrowserWindow;
 export let setPlaylistOverlay: BrowserWindow;
+export let infoPopupOverlays: BrowserWindow[] = [];
 
 const devURL = "http://localhost:5173";
 
@@ -85,4 +86,46 @@ ipcMain.on('resize-set-playlist', (_, withInput: boolean) => {
   }
 
   setPlaylistOverlay.setResizable(false);
+});
+
+
+ipcMain.handle('show-info-popup', (_, data: InfoPopupData) => {
+    const popup = createOverlayWindow(300, 30, data.x, data.y);
+
+    if (is.dev) {
+        popup.loadURL(`${devURL}/infoPopup.html`);
+    } else {
+        popup.loadFile(join(__dirname, "../renderer/infoPopup.html"));
+    }
+
+    popup.webContents.once('did-finish-load', () => {
+        popup!.webContents.send('set-content', data.header, data.body, data.isError, popup.id);
+    });
+    infoPopupOverlays.push(popup);
+    console.log("Created info popup");
+});
+
+ipcMain.handle('hide-info-popup', (_, id: number) => {
+    const popup = infoPopupOverlays.find(overlay => overlay.id === id)
+    if (!popup) {
+        console.error("Tried to hide info popup when it was not set.");
+        return;
+    }
+
+    infoPopupOverlays = infoPopupOverlays.filter(overlay => overlay !== popup);
+    popup.close();
+});
+
+ipcMain.handle('resize-info-popup', (_, width: number, height: number, id: number) => {
+        const popup = infoPopupOverlays.find(overlay => overlay.id === id)
+    if (!popup) {
+        console.error("Tried to set info popup size but could not find it by id.");
+        return;
+    }
+
+    console.log(`Resizing from ${popup.getSize()} to ${width}, ${height}`);
+
+    popup.setResizable(true);
+    popup.setSize(width, height);
+    popup.setResizable(false);
 });

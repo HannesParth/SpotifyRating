@@ -68,3 +68,12 @@ export function createOverlayWindow(
 
   return overlay;
 }
+
+
+export interface InfoPopupData {
+  x: number;
+  y: number;
+  header: string;
+  body: string;
+  isError: boolean;
+}

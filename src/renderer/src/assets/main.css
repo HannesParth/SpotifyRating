@@ -95,6 +95,17 @@ code {
   border-radius: 16px;
 }
 
+#overlay-info-popup {
+  display: flex;
+  background: #272727;
+  align-items: start;
+  justify-content: start;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid #ccc;
+  min-width: 200px;
+}
+
 .spotify-button {
   background-color: #1db954; /* Spotify-Grün */
   color: white;
