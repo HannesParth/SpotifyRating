@@ -3,7 +3,7 @@ import { URL } from "url";
 import { app, shell } from "electron";
 import { writeFileSync, readFileSync } from 'fs'
 import path from "path";
-import { setLoggedInState, showOutput } from ".";
+import { setLoggedInState, showOutput } from "./windows";
 
 // To read more about the used package: https://www.npmjs.com/package/spotify-web-api-node?activeTab=readme
 import SpotifyWebApi from 'spotify-web-api-node';
