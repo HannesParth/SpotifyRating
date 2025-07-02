@@ -28,7 +28,7 @@ const setPlaylistWithInputSize = {
 
 export function createOverlay(): void {
   loginOverlay = createOverlayWindow(115, 46, '70%', '1%');
-  songRateOverlay = createOverlayWindow(80, 30, '20%', '92%');
+  songRateOverlay = createOverlayWindow(80, 35, '20%', '92%');
   outputOverlay = createOverlayWindow(300, 200, '80%', '70%');
   setPlaylistOverlay = createOverlayWindow(
     setPlaylistButtonSize.width, 
@@ -89,43 +89,78 @@ ipcMain.on('resize-set-playlist', (_, withInput: boolean) => {
 });
 
 
+
+//#region Info Popup Window
+
 ipcMain.handle('show-info-popup', (_, data: InfoPopupData) => {
-    const popup = createOverlayWindow(300, 30, data.x, data.y);
-
-    if (is.dev) {
-        popup.loadURL(`${devURL}/infoPopup.html`);
-    } else {
-        popup.loadFile(join(__dirname, "../renderer/infoPopup.html"));
-    }
-
-    popup.webContents.once('did-finish-load', () => {
-        popup!.webContents.send('set-content', data.header, data.body, data.isError, popup.id);
-    });
-    infoPopupOverlays.push(popup);
-    console.log("Created info popup");
+  showInfoPopup(data);
 });
+
+export function showInfoPopup(data: InfoPopupData): BrowserWindow {
+  const popup = createOverlayWindow(300, 30, data.x, data.y);
+
+  if (is.dev) {
+    popup.loadURL(`${devURL}/infoPopup.html`);
+  } else {
+    popup.loadFile(join(__dirname, "../renderer/infoPopup.html"));
+  }
+
+  popup.webContents.once('did-finish-load', () => {
+    popup!.webContents.send('set-content', data.header, data.body, data.isError, popup.id);
+  });
+  infoPopupOverlays.push(popup);
+  console.log("Created info popup");
+
+  return popup;
+}
+
+
 
 ipcMain.handle('hide-info-popup', (_, id: number) => {
-    const popup = infoPopupOverlays.find(overlay => overlay.id === id)
-    if (!popup) {
-        console.error("Tried to hide info popup when it was not set.");
-        return;
-    }
-
-    infoPopupOverlays = infoPopupOverlays.filter(overlay => overlay !== popup);
-    popup.close();
+  hideInfoPopup(id);
 });
+
+export function hideInfoPopup(id: number): void {
+  const popup = infoPopupOverlays.find(overlay => overlay.id === id)
+  if (!popup) {
+    console.error("Tried to hide info popup when it was not set.");
+    return;
+  }
+
+  infoPopupOverlays = infoPopupOverlays.filter(overlay => overlay !== popup);
+  popup.close();
+}
+
+export function hideAllInfoPopups(): void {
+  for (const popup of infoPopupOverlays) {
+    popup.close();
+  }
+  infoPopupOverlays = [];
+}
+
+export function hideTopInfoPopup(): void {
+  const popup = infoPopupOverlays.pop();
+
+  if (!popup) {
+    return;
+  }
+  popup.close();
+}
+
+
 
 ipcMain.handle('resize-info-popup', (_, width: number, height: number, id: number) => {
-        const popup = infoPopupOverlays.find(overlay => overlay.id === id)
-    if (!popup) {
-        console.error("Tried to set info popup size but could not find it by id.");
-        return;
-    }
+  const popup = infoPopupOverlays.find(overlay => overlay.id === id)
+  if (!popup) {
+    console.error("Tried to set info popup size but could not find it by id.");
+    return;
+  }
 
-    console.log(`Resizing from ${popup.getSize()} to ${width}, ${height}`);
+  console.log(`Resizing from ${popup.getSize()} to ${width}, ${height}`);
 
-    popup.setResizable(true);
-    popup.setSize(width, height);
-    popup.setResizable(false);
+  popup.setResizable(true);
+  popup.setSize(width, height);
+  popup.setResizable(false);
 });
+
+//#endregion
