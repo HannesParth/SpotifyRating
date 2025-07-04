@@ -9,6 +9,7 @@ export let outputOverlay: BrowserWindow;
 export let loginOverlay: BrowserWindow;
 export let songRateOverlay: BrowserWindow;
 export let setPlaylistOverlay: BrowserWindow;
+export let segmentBarOverlay: BrowserWindow;
 export let infoPopupOverlays: BrowserWindow[] = [];
 
 const devURL = "http://localhost:5173";
@@ -28,24 +29,27 @@ const setPlaylistWithInputSize = {
 
 export function createOverlay(): void {
   loginOverlay = createOverlayWindow(115, 46, '70%', '1%');
-  songRateOverlay = createOverlayWindow(80, 35, '20%', '92%');
+  songRateOverlay = createOverlayWindow(80, 35, '26%', '94%');
   outputOverlay = createOverlayWindow(300, 200, '80%', '70%');
   setPlaylistOverlay = createOverlayWindow(
     setPlaylistButtonSize.width, 
     setPlaylistButtonSize.height, 
     '23%', '1%'
   );
+  segmentBarOverlay = createOverlayWindow(600, 8, 'center', '98.5%');
 
   if (is.dev) {
     loginOverlay.loadURL(`${devURL}/login.html`);
     songRateOverlay.loadURL(`${devURL}/songRate.html`);
     outputOverlay.loadURL(`${devURL}/outputWindow.html`);
-    setPlaylistOverlay.loadURL(`${devURL}/setPlaylist.html`)
+    setPlaylistOverlay.loadURL(`${devURL}/setPlaylist.html`);
+    segmentBarOverlay.loadURL(`${devURL}/segmentBar.html`);
   } else {
     loginOverlay.loadFile(join(__dirname, "../renderer/login.html"));
     songRateOverlay.loadFile(join(__dirname, "../renderer/songRate.html"));
     songRateOverlay.loadFile(join(__dirname, "../renderer/outputWindow.html"));
-    setPlaylistOverlay.loadFile(join(__dirname, "../renderer/setPlaylist.html"))
+    setPlaylistOverlay.loadFile(join(__dirname, "../renderer/setPlaylist.html"));
+    segmentBarOverlay.loadFile(join(__dirname, "../renderer/segmentBar.html"));
   }
 
   console.log("Created overlay windows");
@@ -61,6 +65,19 @@ export function showOutput(msg: string): void {
 export function setLoggedInState(state: boolean): void {
   loginOverlay.webContents.send('set-sign-in-state', state);
   setPlaylistOverlay.webContents.send('set-sign-in-state', state);
+}
+
+/**
+ * Example call: <br>
+ * setSegments([
+    { from: 0, to: 0.15},
+    { from: 0.15, to: 0.38 },
+    { from: 0.38, to: 0.74 },
+    { from: 0.74, to: 1 },
+  ]);
+ */
+export function setSegments(segments: { from: number, to: number }[]): void {
+  segmentBarOverlay.webContents.send('set-segments', segments);
 }
 
 

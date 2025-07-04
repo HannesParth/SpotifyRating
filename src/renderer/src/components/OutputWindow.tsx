@@ -5,10 +5,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 
-export function showOutput(msg: string) {
-  window.electron.ipcRenderer.send('display-output', msg);
-}
-
 
 function OutputWindow(): React.JSX.Element {
   const [output, setOutput] = useState<string[]>([]);

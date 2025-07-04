@@ -106,6 +106,27 @@ code {
   min-width: 200px;
 }
 
+#overlay-segment-bar {
+  display: flex;
+  align-items: start;
+  justify-content: start;
+  border-radius: 12px;
+  /* border: 1px solid #ff0404; */
+  width: 100%;
+  height: 100%;
+}
+
+.segment {
+  background: white;
+  height: 80%;
+  border-radius: 4px;
+  border: none;
+}
+.segment:hover {
+  background-color: #1db954;
+  border-radius: 2px;
+}
+
 .spotify-button {
   background-color: #1db954; /* Spotify-Grün */
   color: white;
