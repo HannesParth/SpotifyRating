@@ -16,7 +16,7 @@ function SetPlaylistButton(): React.JSX.Element {
     useEffect(() => {
         const unsub = window.electron.ipcRenderer.on('set-sign-in-state', (_: any, state: boolean) => {
             setSignedIn(state);
-            showOutput("Got signed in state: " + state);
+            showOutput("SetPlaylist: signed in = " + state);
         });
     
         return () => { unsub(); };

@@ -14,6 +14,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('api', api);
     contextBridge.exposeInMainWorld('spotifyAPI', {
       auth: () => ipcRenderer.invoke('start-spotify-auth'),
+      logout: () => ipcRenderer.invoke('spotify-logout'),
     });
     contextBridge.exposeInMainWorld('backend', {
       showInfoPopup: (data: InfoPopupData) => ipcRenderer.invoke('show-info-popup', data),

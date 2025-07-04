@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
 import { startSpotifyAuthFlow } from './spotifyAPI';
-import { createOverlay } from './windows';
+import { createOverlay, setLoggedInState } from './windows';
 
 // function createWindow(): void {
 //   // Create the browser window.
@@ -80,6 +80,13 @@ app.on('window-all-closed', () => {
 ipcMain.handle('start-spotify-auth', () => {
   startSpotifyAuthFlow();
 });
+
+// Called when the Logout Button is pressed
+ipcMain.handle('spotify-logout', () => {
+  setLoggedInState(false);
+  console.log("index.ts: Logging out");
+  // TODO: call something from spotifyAPI.ts to delete the access token and reset states
+})
 
 
 

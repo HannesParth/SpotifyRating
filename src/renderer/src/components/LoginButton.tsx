@@ -12,12 +12,10 @@ function LoginButton(): React.JSX.Element {
     const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const unsub = window.electron.ipcRenderer.on('set-sign-in-state', (_: any, state: boolean) => {
+        window.electron.ipcRenderer.on('set-sign-in-state', (_: any, state: boolean) => {
             setSignedIn(state);
         });
-    
-        return () => { unsub(); };
-      }, []);
+    }, []);
 
     const handleLogin = async () => {
         try {
@@ -31,7 +29,8 @@ function LoginButton(): React.JSX.Element {
     };
 
     const handleLogout = async () => {
-        // TODO
+        window.spotifyAPI.logout();
+        showOutput("Logout Button: logged out");
     };
 
     return (

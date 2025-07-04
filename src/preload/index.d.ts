@@ -6,7 +6,8 @@ declare global {
     electron: ElectronAPI
     api: unknown
     spotifyAPI: {
-      auth: () => Promise
+      auth: () => Promise,
+      logout: () => void
     }
     backend: {
       showInfoPopup: (data: InfoPopupData) => void,
