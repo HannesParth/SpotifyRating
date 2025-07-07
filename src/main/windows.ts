@@ -109,6 +109,7 @@ ipcMain.on('resize-set-playlist', (_, withInput: boolean) => {
 
 //#region Info Popup Window
 
+// Called with window.backend.showInfoPopup from the renderer
 ipcMain.handle('show-info-popup', (_, data: InfoPopupData) => {
   showInfoPopup(data);
 });
@@ -129,6 +130,24 @@ export function showInfoPopup(data: InfoPopupData): BrowserWindow {
   console.log("Created info popup");
 
   return popup;
+}
+
+export function showInfoPopupBelow(window: BrowserWindow, header: string, body: string, isError: boolean) : BrowserWindow {
+  const [windowX, windowY] = window.getPosition();
+  const [_windowWidth, windowHeight] = window.getSize();
+
+  const popupWidth = 300;
+  const offset = 16;
+
+  const xPos = windowX + popupWidth / 2;
+  const yPos = windowY + windowHeight + offset;
+  return showInfoPopup({
+    x: xPos,
+    y: yPos,
+    header: header,
+    body: body,
+    isError: isError
+  });
 }
 
 
@@ -172,8 +191,6 @@ ipcMain.handle('resize-info-popup', (_, width: number, height: number, id: numbe
     console.error("Tried to set info popup size but could not find it by id.");
     return;
   }
-
-  console.log(`Resizing from ${popup.getSize()} to ${width}, ${height}`);
 
   popup.setResizable(true);
   popup.setSize(width, height);
