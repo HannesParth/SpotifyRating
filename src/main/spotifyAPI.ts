@@ -1,6 +1,6 @@
 import { createServer } from "http";
 import { URL } from "url";
-import { app, shell } from "electron";
+import { app, shell, ipcMain } from "electron";
 import { writeFileSync, readFileSync } from 'fs'
 import path from "path";
 import { setLoggedInState, showOutput } from "./windows";
@@ -78,6 +78,17 @@ async function ensureToken(): Promise<string | null> {
   setLoggedInState(!!accessToken);
   return accessToken;
 }
+//#endregion
+
+//#region Playlist
+function getPlaylist(playlistName: any) {
+  return playlistName
+}
+
+ipcMain.on('choose-managed-playlist', (_: any, playlistName: any) => {
+  getPlaylist(playlistName);
+  console.log("Got playlist: " + playlistName);
+});
 //#endregion
 
 export async function startSpotifyAuthFlow(): Promise<void> {
