@@ -89,6 +89,27 @@ ipcMain.on('choose-managed-playlist', (_: any, playlistName: any) => {
   getPlaylist(playlistName);
   console.log("Got playlist: " + playlistName);
 });
+
+function getUser() {
+  // Get the authenticated user
+  spotifyApi.getMe()
+  .then(function(data) {
+    console.log('Some information about the authenticated user', data.body);
+    return data.body;
+  }, function(err) {
+    console.log('Something went wrong!', err);
+  });
+}
+
+function getAllPlaylist(userID) {
+// Get a user's playlists
+spotifyApi.getUserPlaylists(userID)
+  .then(function(data) {
+    console.log('Retrieved playlists', data.body);
+  },function(err) {
+    console.log('Something went wrong!', err);
+  });
+}
 //#endregion
 
 export async function startSpotifyAuthFlow(): Promise<void> {
