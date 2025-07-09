@@ -85,30 +85,54 @@ function getPlaylist(playlistName: any) {
   return playlistName
 }
 
-ipcMain.on('choose-managed-playlist', (_: any, playlistName: any) => {
+ipcMain.on('choose-managed-playlist', async (_: any, playlistName: string) => {
   getPlaylist(playlistName);
   console.log("Got playlist: " + playlistName);
+  var playlistID = await searchAllPlaylists(playlistName)
+  if (playlistID == null){
+    console.log("Could not find " + playlistName)
+  }
+  else{console.log("Got playlist ID: " + playlistID)}
 });
 
-function getUser() {
+async function getUser() {
   // Get the authenticated user
-  spotifyApi.getMe()
-  .then(function(data) {
-    console.log('Some information about the authenticated user', data.body);
-    return data.body;
-  }, function(err) {
-    console.log('Something went wrong!', err);
-  });
+  return spotifyApi.getMe();
+  // .then(function(data) {
+  //   console.log('Some information about the authenticated user', data.body);
+  //   return data.body;
+  // }, function(err) {
+  //   console.log('Something went wrong!', err);
+  // });
 }
 
-function getAllPlaylist(userID) {
-// Get a user's playlists
-spotifyApi.getUserPlaylists(userID)
-  .then(function(data) {
-    console.log('Retrieved playlists', data.body);
-  },function(err) {
-    console.log('Something went wrong!', err);
-  });
+async function getUserID(): Promise<string>{
+  var user = await getUser();
+  console.log('Returned current user ID', user.body.id);
+  return user.body.id;
+}
+
+// async function getAllPlaylist(): Promise<string> {
+// // Get a user's playlists
+// var userID = await getUserID();
+// var allPlaylists = await spotifyApi.getUserPlaylists(userID)
+//   .then(function(data) {
+//     console.log('Retrieved playlists', data.body);
+//   },function(err) {
+//     console.log('Something went wrong!', err);
+//   })
+//   return allPlaylists;
+// }
+
+async function searchAllPlaylists(playlistName: string): Promise<string | null> {
+  //var allP = await spotifyApi.getUserPlaylists(await getUserID());
+  var response = await spotifyApi.getUserPlaylists(await getUserID());
+  var allP = response.body.items;
+
+  var  foundP = allP.find(
+      (playlist) => playlist.name === playlistName
+    );
+    return foundP ? foundP.id : null
 }
 //#endregion
 
