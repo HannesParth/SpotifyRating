@@ -3,6 +3,7 @@ import { BrowserWindow, ipcMain } from 'electron';
 import { is } from '@electron-toolkit/utils'
 import { createOverlayWindow, InfoPopupData } from './utility';
 import { join } from 'path'
+import { startSpotifyMonitor } from './spotifyMonitor';
 
 
 export let outputOverlay: BrowserWindow;
@@ -11,6 +12,8 @@ export let songRateOverlay: BrowserWindow;
 export let setPlaylistOverlay: BrowserWindow;
 export let segmentBarOverlay: BrowserWindow;
 export let infoPopupOverlays: BrowserWindow[] = [];
+
+const allNonPopups: BrowserWindow[] = [];
 
 const devURL = "http://localhost:5173";
 
@@ -25,7 +28,7 @@ const setPlaylistWithInputSize = {
 }
 
 
-
+//#region Windows
 
 export function createOverlay(): void {
   loginOverlay = createOverlayWindow(115, 46, '70%', '1%');
@@ -52,10 +55,34 @@ export function createOverlay(): void {
     segmentBarOverlay.loadFile(join(__dirname, "../renderer/segmentBar.html"));
   }
 
+  allNonPopups.push(loginOverlay);
+  allNonPopups.push(songRateOverlay);
+  allNonPopups.push(outputOverlay);
+  allNonPopups.push(setPlaylistOverlay);
+  allNonPopups.push(segmentBarOverlay);
+
+  setPlaylistOverlay.on('ready-to-show', () => {
+    // those processes are quit when spotify is quit
+    startSpotifyMonitor(showAllWindows, hideAllWindows);
+  });
+
   console.log("Created overlay windows");
 }
 
 
+function hideAllWindows(): void {
+  allNonPopups.forEach(win => win.hide());
+  infoPopupOverlays.forEach(win => win.hide());
+  console.log("Hiding windows");
+}
+
+function showAllWindows(): void {
+  allNonPopups.forEach(win => win.show());
+  infoPopupOverlays.forEach(win => win.show());
+  console.log("Showing windows");
+}
+
+//#endregion
 
 
 export function showOutput(msg: string): void {
