@@ -4,6 +4,11 @@ import { is } from '@electron-toolkit/utils'
 import { createOverlayWindow, InfoPopupData } from './utility';
 import { join } from 'path'
 import { startSpotifyMonitor } from './spotifyMonitor';
+import { registerHandler } from './testCalls';
+
+
+const showTestButton: boolean = true;
+export let testButton: BrowserWindow;
 
 
 export let outputOverlay: BrowserWindow;
@@ -27,27 +32,52 @@ const setPlaylistWithInputSize = {
   height: 130,
 }
 
+const segmentBarSize = {
+  width: 600,
+  height: 8,
+}
+
+const segmentBarWithPopupSize = {
+  width: 600,
+  height: 50,
+}
+
+let segmentBarStartY: number;
+
 
 //#region Windows
 
 export function createOverlay(): void {
+  if (showTestButton) {
+    testButton = createOverlayWindow(100, 46, 20, 20);
+  }
   loginOverlay = createOverlayWindow(115, 46, '70%', '1%');
-  songRateOverlay = createOverlayWindow(80, 35, '26%', '94%');
+  songRateOverlay = createOverlayWindow(70, 35, '26%', '94%');
   outputOverlay = createOverlayWindow(300, 200, '80%', '70%');
   setPlaylistOverlay = createOverlayWindow(
     setPlaylistButtonSize.width, 
     setPlaylistButtonSize.height, 
     '23%', '1%'
   );
-  segmentBarOverlay = createOverlayWindow(600, 8, 'center', '98.5%');
+  segmentBarOverlay = createOverlayWindow(
+    segmentBarSize.width, 
+    segmentBarSize.height, 
+    'center', '98.5%'
+  );
 
   if (is.dev) {
+    if (showTestButton) {
+      testButton.loadURL(`${devURL}/testButton.html`);
+    }
     loginOverlay.loadURL(`${devURL}/login.html`);
     songRateOverlay.loadURL(`${devURL}/songRate.html`);
     outputOverlay.loadURL(`${devURL}/outputWindow.html`);
     setPlaylistOverlay.loadURL(`${devURL}/setPlaylist.html`);
     segmentBarOverlay.loadURL(`${devURL}/segmentBar.html`);
   } else {
+    if (showTestButton) {
+      testButton.loadFile(join(__dirname, "../renderer/testButton.html"));
+    }
     loginOverlay.loadFile(join(__dirname, "../renderer/login.html"));
     songRateOverlay.loadFile(join(__dirname, "../renderer/songRate.html"));
     songRateOverlay.loadFile(join(__dirname, "../renderer/outputWindow.html"));
@@ -64,11 +94,11 @@ export function createOverlay(): void {
   setPlaylistOverlay.on('ready-to-show', () => {
     // those processes are quit when spotify is quit
     startSpotifyMonitor(showAllWindows, hideAllWindows);
+    segmentBarStartY = segmentBarOverlay.getPosition()[1];
   });
 
   console.log("Created overlay windows");
 }
-
 
 function hideAllWindows(): void {
   allNonPopups.forEach(win => win.hide());
@@ -83,6 +113,11 @@ function showAllWindows(): void {
 }
 
 //#endregion
+
+if (showTestButton) {
+  registerHandler();
+}
+
 
 
 export function showOutput(msg: string): void {
@@ -118,6 +153,7 @@ ipcMain.on('display-output', (_, errorMessage) => {
 
 
 // Called when the Set Playlist input popup should be shown or hidden
+// the popup itself is a UI element that is enabled or disabled in the renderer
 ipcMain.on('resize-set-playlist', (_, withInput: boolean) => {
   setPlaylistOverlay.setResizable(true);
 
@@ -132,6 +168,24 @@ ipcMain.on('resize-set-playlist', (_, withInput: boolean) => {
   setPlaylistOverlay.setResizable(false);
 });
 
+// Called when the Segment Rating popup should be shown or hidden
+ipcMain.on('resize-segment-window', (_, withPopup: boolean) => {
+  segmentBarOverlay.setResizable(true);
+  const pos = segmentBarOverlay.getPosition();
+
+  if (withPopup) {
+    segmentBarOverlay.setSize(segmentBarWithPopupSize.width, segmentBarWithPopupSize.height);
+    const yDelta = segmentBarWithPopupSize.height - segmentBarSize.height;
+    segmentBarOverlay.setPosition(pos[0], segmentBarStartY - yDelta);
+    console.log("Resizing to ", segmentBarWithPopupSize);
+  } else {
+    segmentBarOverlay.setSize(segmentBarSize.width, segmentBarSize.height);
+    segmentBarOverlay.setPosition(pos[0], segmentBarStartY);
+    console.log("Resizing to ", segmentBarSize);
+  }
+
+  segmentBarOverlay.setResizable(false);
+});
 
 
 //#region Info Popup Window

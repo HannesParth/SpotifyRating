@@ -1,5 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import { InfoPopupData } from '../main/utility'
+import { InfoPopupData, rating } from '../main/utility'
 
 declare global {
   interface Window {
@@ -7,12 +7,17 @@ declare global {
     api: unknown
     spotifyAPI: {
       auth: () => Promise,
-      logout: () => void
+      logout: () => Promise
     }
     backend: {
-      showInfoPopup: (data: InfoPopupData) => void,
-      hideInfoPopup: (id: number) => void,
-      resizeInfoPopup: (width: number, height: number, id: number) => void,
+      showInfoPopup: (data: InfoPopupData) => Promise,
+      hideInfoPopup: (id: number) => Promise,
+      resizeInfoPopup: (width: number, height: number, id: number) => Promise,
+      rateCurrentSong: (rating: rating) => Promise,
+      rateCurrentSongSegment: (rating: rating, seg_index: number) => Promise,
+      isSongRatingAllowed: () => Promise<boolean>,
+      isSegmentRatingAllowed: () => Promise<boolean>,
+      callTest: () => Promise,
     }
   }
 }

@@ -3,6 +3,7 @@ import { electronApp, optimizer } from '@electron-toolkit/utils'
 
 import { startSpotifyAuthFlow } from './spotifyAPI';
 import { createOverlay, setLoggedInState } from './windows';
+import { rating } from './utility';
 
 // function createWindow(): void {
 //   // Create the browser window.
@@ -67,6 +68,8 @@ app.whenReady().then(() => {
 
 
 
+// --- Authentication ---
+
 // Called when the Login Button is pressed
 ipcMain.handle('start-spotify-auth', () => {
   startSpotifyAuthFlow();
@@ -81,11 +84,44 @@ ipcMain.handle('spotify-logout', () => {
 
 
 
+// --- Playlist ---
+
 ipcMain.on('choose-managed-playlist', (_, playlistName: string) => {
   console.log("Got name of playlist to manage: " + playlistName);
 });
 
 
+
+// --- Rating ---
+
+ipcMain.handle('rate-current-song', (_, rating: rating) => {
+  // @Sara: get the rating here, then get the current song from the spotify api and cache that together
+  // rating can be 0, -1 or 1, see type definition
+  console.log("Rated current song: ", rating);
+});
+
+ipcMain.handle('rate-segment', (_, rating: rating, seg_index: number) => {
+  // @Sara: get the rating here, then get the current song from the spotify api and cache that together
+  // rating can be 0, -1 or 1, see type definition
+  console.log("Rated current songs segment: ", seg_index, ", rating ", rating);
+});
+
+ipcMain.handle('is-song-rating-allowed', () => {
+  // @Sara: check here if the current song is in the cache and has a rating other than 0
+  // so it can not be rated more than once
+  return true; // placeholder
+});
+
+ipcMain.handle('is-segment-rating-allowed', () => {
+  // @Sara: check here if the current song is in the cache and has a segment rating other than 0
+  // so it can not be rated more than once
+  console.log("Checking");
+  return false; // placeholder
+});
+
+
+
+// --- Window Management ---
 
 // If not ALL windows are focusable = false while transparent = true, windows will always show 
 // an ugly title bar behind everything when the window loses focus. 

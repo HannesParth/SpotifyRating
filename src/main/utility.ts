@@ -2,6 +2,9 @@ import { BrowserWindow, screen } from "electron";
 import { join } from "path";
 
 
+
+export type rating = -1 | 0 | 1;
+
 export type windowPos = 
   | 'start'
   | 'center'

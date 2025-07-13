@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { InfoPopupData } from '../main/utility'
+import { InfoPopupData, rating } from '../main/utility'
 
 // Custom APIs for renderer
 const api = {}
@@ -20,6 +20,11 @@ if (process.contextIsolated) {
       showInfoPopup: (data: InfoPopupData) => ipcRenderer.invoke('show-info-popup', data),
       hideInfoPopup: (id: number) => ipcRenderer.invoke('hide-info-popup', id),
       resizeInfoPopup: (width: number, height: number, id: number) => ipcRenderer.invoke('resize-info-popup', width, height, id),
+      rateCurrentSong: (rating: rating) => ipcRenderer.invoke('rate-current-song', rating),
+      rateCurrentSongSegment: (rating: rating, seg_index: number) => ipcRenderer.invoke('rate-segment', rating, seg_index),
+      isSongRatingAllowed: () => ipcRenderer.invoke('is-song-rating-allowed'),
+      isSegmentRatingAllowed: () => ipcRenderer.invoke('is-segment-rating-allowed'),
+      callTest: () => ipcRenderer.invoke('test-button-call'),
     });
   } catch (error) {
     console.error(error)

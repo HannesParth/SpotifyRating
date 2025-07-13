@@ -6,11 +6,19 @@ import { createRoot } from 'react-dom/client';
 function SongRate(): React.JSX.Element {
 
     const handlePlus = async () => {
-        console.log("Pressed plus");
+        const allowed = await window.backend.isSongRatingAllowed();
+        if (!allowed)
+            return;
+    
+        window.backend.rateCurrentSong(1);
     };
 
     const handleMinus = async () => {
-        console.log("Pressed minus");
+        const allowed = await window.backend.isSongRatingAllowed();
+        if (!allowed)
+            return;
+
+        window.backend.rateCurrentSong(-1);
     };
 
     return (

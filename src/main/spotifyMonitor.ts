@@ -1,7 +1,6 @@
 // src/main/spotifyMonitor.ts
 import activeWindow from 'active-win';
 
-
 type Callback = () => void;
 
 let lastState = false;
@@ -21,12 +20,15 @@ export function startSpotifyMonitor(
   interval = setInterval(async () => {
     try {
       const active = await activeWindow();
-      const isSpotify =
-        active?.owner?.name?.toLowerCase().includes('spotify') ?? false;
+      const windowName = active?.owner?.name?.toLowerCase();
+      const isSpotify = windowName?.includes('spotify') ?? false;
+      const isOwnApp = windowName?.includes('electron') ?? false;
+      
+      const isRelevant = isSpotify || isOwnApp;
 
-      if (isSpotify !== lastState) {
-        lastState = isSpotify;
-        isSpotify ? onFocus() : onBlur();
+      if (isRelevant !== lastState) {
+        lastState = isRelevant;
+        isRelevant ? onFocus() : onBlur();
       }
     } catch (err) {
       console.error("Failed to get active window:", err);
