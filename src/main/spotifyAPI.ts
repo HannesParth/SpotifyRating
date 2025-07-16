@@ -124,7 +124,7 @@ async function getUserID(): Promise<string>{
 //   return allPlaylists;
 // }
 
-async function searchAllPlaylists(playlistName: string): Promise<string | null> {
+export async function searchAllPlaylists(playlistName: string): Promise<string | null> {
   //var allP = await spotifyApi.getUserPlaylists(await getUserID());
   var response = await spotifyApi.getUserPlaylists(await getUserID());
   var allP = response.body.items;

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
-import { startSpotifyAuthFlow } from './spotifyAPI';
+import { startSpotifyAuthFlow, searchAllPlaylists } from './spotifyAPI';
 import { createOverlay, setLoggedInState } from './windows';
 import { rating } from './utility';
 
@@ -86,8 +86,14 @@ ipcMain.handle('spotify-logout', () => {
 
 // --- Playlist ---
 
-ipcMain.on('choose-managed-playlist', (_, playlistName: string) => {
+ipcMain.on('choose-managed-playlist', async (_, playlistName: string) => {
   console.log("Got name of playlist to manage: " + playlistName);
+  console.log("Got playlist: " + playlistName);
+  var playlistID = await searchAllPlaylists(playlistName)
+  if (playlistID == null){
+    console.log("Could not find " + playlistName)
+  }
+  else{console.log("Got playlist ID: " + playlistID)}
 });
 
 
@@ -103,6 +109,7 @@ ipcMain.handle('rate-current-song', (_, rating: rating) => {
 ipcMain.handle('rate-segment', (_, rating: rating, seg_index: number) => {
   // @Sara: get the rating here, then get the current song from the spotify api and cache that together
   // rating can be 0, -1 or 1, see type definition
+
   console.log("Rated current songs segment: ", seg_index, ", rating ", rating);
 });
 
