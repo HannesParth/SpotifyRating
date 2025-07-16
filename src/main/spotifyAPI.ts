@@ -7,6 +7,7 @@ import { setLoggedInState, showOutput } from "./windows";
 
 // To read more about the used package: https://www.npmjs.com/package/spotify-web-api-node?activeTab=readme
 import SpotifyWebApi from 'spotify-web-api-node';
+import { rating } from "./utility";
 
 const clientId = "99e38fb1a67b4588b75b9498eda217a6";
 const clientSecret = "e53cf04f50734db9a06373e95b8deed5";
@@ -85,15 +86,15 @@ function getPlaylist(playlistName: any) {
   return playlistName
 }
 
-ipcMain.on('choose-managed-playlist', async (_: any, playlistName: string) => {
-  getPlaylist(playlistName);
-  console.log("Got playlist: " + playlistName);
-  var playlistID = await searchAllPlaylists(playlistName)
-  if (playlistID == null){
-    console.log("Could not find " + playlistName)
-  }
-  else{console.log("Got playlist ID: " + playlistID)}
-});
+// ipcMain.on('choose-managed-playlist', async (_: any, playlistName: string) => {
+//   getPlaylist(playlistName);
+//   console.log("Got playlist: " + playlistName);
+//   var playlistID = await searchAllPlaylists(playlistName)
+//   if (playlistID == null){
+//     console.log("Could not find " + playlistName)
+//   }
+//   else{console.log("Got playlist ID: " + playlistID)}
+// });
 
 async function getUser() {
   // Get the authenticated user
@@ -133,6 +134,19 @@ export async function searchAllPlaylists(playlistName: string): Promise<string |
       (playlist) => playlist.name === playlistName
     );
     return foundP ? foundP.id : null
+}
+//#endregion
+
+//#region Rating
+export async function getCurrentSong(): Promise<string | null> {
+  var songID = (await spotifyApi.getMyCurrentPlayingTrack()).body.item?.id!;
+  if(songID === null){
+    console.log("Error, songID is null")
+  }
+  else{
+      console.log("Got songID " + spotifyApi.getMyCurrentPlayingTrack());
+  }
+  return songID
 }
 //#endregion
 

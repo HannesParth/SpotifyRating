@@ -1,7 +1,8 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
-import { startSpotifyAuthFlow, searchAllPlaylists } from './spotifyAPI';
+//import { startSpotifyAuthFlow, searchAllPlaylists, getCurrentSong } from './spotifyAPI';
+import { startSpotifyAuthFlow, searchAllPlaylists, getCurrentSong } from './spotifyAPI';
 import { createOverlay, setLoggedInState } from './windows';
 import { rating } from './utility';
 
@@ -103,6 +104,7 @@ ipcMain.on('choose-managed-playlist', async (_, playlistName: string) => {
 ipcMain.handle('rate-current-song', (_, rating: rating) => {
   // @Sara: get the rating here, then get the current song from the spotify api and cache that together
   // rating can be 0, -1 or 1, see type definition
+  var songID = getCurrentSong();
   console.log("Rated current song: ", rating);
 });
 
