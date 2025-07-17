@@ -126,7 +126,6 @@ async function getUserID(): Promise<string>{
 // }
 
 export async function searchAllPlaylists(playlistName: string): Promise<string | null> {
-  //var allP = await spotifyApi.getUserPlaylists(await getUserID());
   var response = await spotifyApi.getUserPlaylists(await getUserID());
   var allP = response.body.items;
 
@@ -134,6 +133,17 @@ export async function searchAllPlaylists(playlistName: string): Promise<string |
       (playlist) => playlist.name === playlistName
     );
     return foundP ? foundP.id : null
+}
+
+export async function playlistSongs(playlistID: string) {
+  //var fields:string = "items(track(id))"; // fix this to only retrieve songIDs
+  var response = (await spotifyApi.getPlaylistTracks(playlistID)).body.items;
+  var songIDs: any[] = [] //using any isn't good but I am tired
+  for (let i=0; i++; i<response.length){
+      songIDs.push(response[i].track?.id)
+  }
+  console.log("Retrieved all song IDs from playlist"+ songIDs);
+  return songIDs
 }
 //#endregion
 
