@@ -142,6 +142,11 @@ export async function playlistSongs(playlistID: string){
   return songs
 }
 
+//track an array of URIs of tracks to add to the playlist, I'm sorry
+export async function addToPlaylist(playlistID: string, track: readonly string[]) {
+  spotifyApi.addTracksToPlaylist(playlistID, track)
+}
+
 export async function playlistSongIDs(playlistID: string) {
   //var fields:string = "items(track(id))"; // fix this to only retrieve songIDs
   var response = (await spotifyApi.getPlaylistTracks(playlistID)).body.items;
