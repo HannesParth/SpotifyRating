@@ -135,7 +135,14 @@ export async function searchAllPlaylists(playlistName: string): Promise<string |
     return foundP ? foundP.id : null
 }
 
-export async function playlistSongs(playlistID: string) {
+//returns all playlist tracks with all info
+export async function playlistSongs(playlistID: string){
+  var songs = (await spotifyApi.getPlaylistTracks(playlistID)).body;
+  console.log("Retrieved all songs from playlist"+ songs);
+  return songs
+}
+
+export async function playlistSongIDs(playlistID: string) {
   //var fields:string = "items(track(id))"; // fix this to only retrieve songIDs
   var response = (await spotifyApi.getPlaylistTracks(playlistID)).body.items;
   var songIDs: any[] = [] //using any isn't good but I am tired
