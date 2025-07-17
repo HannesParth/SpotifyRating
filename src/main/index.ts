@@ -100,19 +100,42 @@ ipcMain.on('choose-managed-playlist', async (_, playlistName: string) => {
 
 
 // --- Rating ---
+type RatedSong = {
+  songID: Promise<string | null>;
+  rating: rating;
+};
 
-ipcMain.handle('rate-current-song', (_, rating: rating) => {
+type RatedSongIndex = {
+  songID: Promise<string | null>;
+  rating: rating;
+  seg_index: number;
+};
+
+ipcMain.handle('rate-current-song', (_, rating: rating): RatedSong  => {
   // @Sara: get the rating here, then get the current song from the spotify api and cache that together
   // rating can be 0, -1 or 1, see type definition
   var songID = getCurrentSong();
+  var rs : RatedSong = {
+    songID: songID,
+    rating: rating
+  }
   console.log("Rated current song: ", rating);
+  console.log("Current song: ", songID);
+  return rs
 });
 
 ipcMain.handle('rate-segment', (_, rating: rating, seg_index: number) => {
   // @Sara: get the rating here, then get the current song from the spotify api and cache that together
   // rating can be 0, -1 or 1, see type definition
-
+  var songID = getCurrentSong();
+  var rsi : RatedSongIndex = {
+    songID: songID,
+    rating: rating,
+    seg_index: seg_index
+  }
+  console.log("Rated current song: ", rating);
   console.log("Rated current songs segment: ", seg_index, ", rating ", rating);
+  return rsi
 });
 
 ipcMain.handle('is-song-rating-allowed', () => {
