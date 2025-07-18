@@ -93,7 +93,7 @@ export function createOverlay(): void {
 
   setPlaylistOverlay.on('ready-to-show', () => {
     // those processes are quit when spotify is quit
-    startSpotifyMonitor(showAllWindows, hideAllWindows);
+    //startSpotifyMonitor(showAllWindows, hideAllWindows);
     segmentBarStartY = segmentBarOverlay.getPosition()[1];
   });
 
@@ -222,6 +222,24 @@ export function showInfoPopupBelow(window: BrowserWindow, header: string, body: 
 
   const xPos = windowX + popupWidth / 2;
   const yPos = windowY + windowHeight + offset;
+  return showInfoPopup({
+    x: xPos,
+    y: yPos,
+    header: header,
+    body: body,
+    isError: isError
+  });
+}
+
+export function showInfoPopupAbove(window: BrowserWindow, header: string, body: string, isError: boolean) : BrowserWindow {
+  const [windowX, windowY] = window.getPosition();
+
+  const popupWidth = 300;
+  const popupHeight = 300; // arbitrary
+  const offset = 16;
+
+  const xPos = windowX + popupWidth / 2;
+  const yPos = windowY - popupHeight - offset;
   return showInfoPopup({
     x: xPos,
     y: yPos,

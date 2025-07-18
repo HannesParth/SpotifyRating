@@ -5,7 +5,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: black;
+  background: transparent;
 }
 
 body {
@@ -173,12 +173,16 @@ code {
 
 .song-rate-plus {
   color: #ffffff;
-  background-color: #1ed760;
+  background-color: #1db954;
   padding: 6px;
   margin: 2px;
   min-width: 30px;
   border-radius: 50% 0px 0px 50%;
   border: none;
+}
+
+.song-rate-plus:hover {
+  background-color: #1ed760;
 }
 
 .song-rate-minus {
@@ -189,6 +193,10 @@ code {
   min-width: 30px;
   border-radius: 0px 50% 50% 0px;
   border: none;
+}
+
+.song-rate-minus:hover {
+  background-color: #e93131
 }
 
 

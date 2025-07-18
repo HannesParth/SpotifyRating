@@ -1,42 +1,10 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
-//import { startSpotifyAuthFlow, searchAllPlaylists, getCurrentSong } from './spotifyAPI';
 import { startSpotifyAuthFlow, searchAllPlaylists, getCurrentSong } from './spotifyAPI';
-import { createOverlay, setLoggedInState } from './windows';
+import { createOverlay, setLoggedInState, showInfoPopup, showInfoPopupAbove, songRateOverlay } from './windows';
 import { rating } from './utility';
-
-// function createWindow(): void {
-//   // Create the browser window.
-//   mainWindow = new BrowserWindow({
-//     width: 900,
-//     height: 670,
-//     show: false,
-//     autoHideMenuBar: true,
-//     ...(process.platform === 'linux' ? { icon } : {}),
-//     webPreferences: {
-//       preload: join(__dirname, '../preload/index.js'),
-//       sandbox: false
-//     }
-//   })
-
-//   mainWindow.on('ready-to-show', () => {
-//     mainWindow.show()
-//   })
-
-//   mainWindow.webContents.setWindowOpenHandler((details) => {
-//     shell.openExternal(details.url)
-//     return { action: 'deny' }
-//   })
-
-//   // HMR for renderer base on electron-vite cli.
-//   // Load the remote URL for development or the local html file for production.
-//   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-//     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-//   } else {
-//     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
-//   }
-// }
+import { addSegmentRating, addSongRating, isSegmentRated, isSongRated } from './storage';
 
 
 
@@ -90,65 +58,54 @@ ipcMain.handle('spotify-logout', () => {
 ipcMain.on('choose-managed-playlist', async (_, playlistName: string) => {
   console.log("Got name of playlist to manage: " + playlistName);
   console.log("Got playlist: " + playlistName);
-  var playlistID = await searchAllPlaylists(playlistName)
+  var playlistID = await searchAllPlaylists(playlistName);
   if (playlistID == null){
-    console.log("Could not find " + playlistName)
+    console.error("Could not find " + playlistName);
+  } else {
+    console.log("Got playlist ID: " + playlistID);
   }
-  else{console.log("Got playlist ID: " + playlistID)}
 });
 
 
 
 // --- Rating ---
-type RatedSong = {
-  songID: Promise<string | null>;
-  rating: rating;
-};
 
-type RatedSongIndex = {
-  songID: Promise<string | null>;
-  rating: rating;
-  seg_index: number;
-};
 
-ipcMain.handle('rate-current-song', (_, rating: rating): RatedSong  => {
-  // @Sara: get the rating here, then get the current song from the spotify api and cache that together
-  // rating can be 0, -1 or 1, see type definition
-  var songID = getCurrentSong();
-  var rs : RatedSong = {
-    songID: songID,
-    rating: rating
+ipcMain.handle('rate-current-song', async (_, rating: rating) => {
+  var songID = await getCurrentSong();
+  if (!songID) {
+    return;
   }
-  console.log("Rated current song: ", rating);
-  console.log("Current song: ", songID);
-  return rs
+
+  addSongRating(songID, rating);
+  console.log("Rated current song: ", songID, ", with rating: ", rating);
 });
 
-ipcMain.handle('rate-segment', (_, rating: rating, seg_index: number) => {
-  // @Sara: get the rating here, then get the current song from the spotify api and cache that together
-  // rating can be 0, -1 or 1, see type definition
-  var songID = getCurrentSong();
-  var rsi : RatedSongIndex = {
-    songID: songID,
-    rating: rating,
-    seg_index: seg_index
-  }
-  console.log("Rated current song: ", rating);
-  console.log("Rated current songs segment: ", seg_index, ", rating ", rating);
-  return rsi
+ipcMain.handle('rate-segment', async (_, rating: rating, seg_index: number) => {
+  var songID = await getCurrentSong();
+  if (!songID) return;
+
+  addSegmentRating(songID, seg_index, rating);
+  console.log(`Rated song [${songID}], segment [${seg_index}], with rating [${rating}]`);
 });
 
-ipcMain.handle('is-song-rating-allowed', () => {
-  // @Sara: check here if the current song is in the cache and has a rating other than 0
-  // so it can not be rated more than once
-  return true; // placeholder
+ipcMain.handle('is-song-rating-allowed', async (): Promise<boolean> => {
+  var songID = await getCurrentSong();
+  if (!songID) return false;
+
+  // TODO: check if logged in
+  // check if song is in a currently managed playlist
+
+  return !isSongRated(songID);
 });
 
-ipcMain.handle('is-segment-rating-allowed', () => {
-  // @Sara: check here if the current song is in the cache and has a segment rating other than 0
-  // so it can not be rated more than once
-  console.log("Checking");
-  return false; // placeholder
+ipcMain.handle('is-segment-rating-allowed', async (): Promise<boolean> => {
+  var songID = await getCurrentSong();
+  if (!songID) return false;
+
+  // TODO: check if logged in
+
+  return !isSegmentRated(songID);
 });
 
 

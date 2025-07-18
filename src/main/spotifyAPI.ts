@@ -81,20 +81,11 @@ async function ensureToken(): Promise<string | null> {
 }
 //#endregion
 
-//#region Playlist
-function getPlaylist(playlistName: any) {
-  return playlistName
-}
 
-// ipcMain.on('choose-managed-playlist', async (_: any, playlistName: string) => {
-//   getPlaylist(playlistName);
-//   console.log("Got playlist: " + playlistName);
-//   var playlistID = await searchAllPlaylists(playlistName)
-//   if (playlistID == null){
-//     console.log("Could not find " + playlistName)
-//   }
-//   else{console.log("Got playlist ID: " + playlistID)}
-// });
+
+
+
+//#region Playlist
 
 async function getUser() {
   // Get the authenticated user
@@ -159,18 +150,27 @@ export async function playlistSongIDs(playlistID: string) {
 }
 //#endregion
 
+
+
+
 //#region Rating
 export async function getCurrentSong(): Promise<string | null> {
-  var songID = (await spotifyApi.getMyCurrentPlayingTrack()).body.item?.id!;
-  if(songID === null){
-    console.log("Error, songID is null")
+  const response = await spotifyApi.getMyCurrentPlayingTrack();
+  const playingObj = response.body.item;
+
+  if (!playingObj) {
+    console.warn("Could not get current song!");
+    return null
   }
-  else{
-      console.log("Got songID " + spotifyApi.getMyCurrentPlayingTrack());
-  }
-  return songID
+
+  const songID: string = playingObj.id;
+  console.log("Got songID: ", songID);
+  return songID;
 }
 //#endregion
+
+
+
 
 export async function startSpotifyAuthFlow(): Promise<void> {
   console.log("\nStarting spotify auth flow");

@@ -82,14 +82,13 @@ function SegmentBar(): React.JSX.Element {
 
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', background: 'blue'}}>
+    <div style={{ position: 'relative', width: '100%', height: '100%'}}>
       <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
         height: '8px',
-        background: 'red'
       }}>
         {segments.map((seg, index) => {
         const leftPercent = seg.from * 100;
