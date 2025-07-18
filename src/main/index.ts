@@ -4,7 +4,7 @@ import { electronApp, optimizer } from '@electron-toolkit/utils'
 import { startSpotifyAuthFlow, searchAllPlaylists, getCurrentSong } from './spotifyAPI';
 import { createOverlay, setLoggedInState, showInfoPopup, showInfoPopupAbove, songRateOverlay } from './windows';
 import { rating } from './utility';
-import { addSegmentRating, addSongRating, isSegmentRated, isSongRated } from './storage';
+import Storage from './storage';
 
 
 
@@ -57,13 +57,14 @@ ipcMain.handle('spotify-logout', () => {
 
 ipcMain.on('choose-managed-playlist', async (_, playlistName: string) => {
   console.log("Got name of playlist to manage: " + playlistName);
-  console.log("Got playlist: " + playlistName);
   var playlistID = await searchAllPlaylists(playlistName);
   if (playlistID == null){
-    console.error("Could not find " + playlistName);
-  } else {
-    console.log("Got playlist ID: " + playlistID);
+    console.error("Could not find ID of playlist: " + playlistName);
+    return;
   }
+  
+  console.log("Got playlist ID: " + playlistID);
+  Storage.managedPlaylistId = playlistID;
 });
 
 
@@ -77,7 +78,7 @@ ipcMain.handle('rate-current-song', async (_, rating: rating) => {
     return;
   }
 
-  addSongRating(songID, rating);
+  Storage.addSongRating(songID, rating);
   console.log("Rated current song: ", songID, ", with rating: ", rating);
 });
 
@@ -85,27 +86,8 @@ ipcMain.handle('rate-segment', async (_, rating: rating, seg_index: number) => {
   var songID = await getCurrentSong();
   if (!songID) return;
 
-  addSegmentRating(songID, seg_index, rating);
+  Storage.addSegmentRating(songID, seg_index, rating);
   console.log(`Rated song [${songID}], segment [${seg_index}], with rating [${rating}]`);
-});
-
-ipcMain.handle('is-song-rating-allowed', async (): Promise<boolean> => {
-  var songID = await getCurrentSong();
-  if (!songID) return false;
-
-  // TODO: check if logged in
-  // check if song is in a currently managed playlist
-
-  return !isSongRated(songID);
-});
-
-ipcMain.handle('is-segment-rating-allowed', async (): Promise<boolean> => {
-  var songID = await getCurrentSong();
-  if (!songID) return false;
-
-  // TODO: check if logged in
-
-  return !isSegmentRated(songID);
 });
 
 

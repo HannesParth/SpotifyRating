@@ -1,13 +1,13 @@
 import { createServer } from "http";
 import { URL } from "url";
-import { app, shell, ipcMain } from "electron";
+import { app, shell } from "electron";
 import { writeFileSync, readFileSync } from 'fs'
 import path from "path";
 import { setLoggedInState, showOutput } from "./windows";
+import Storage from "./storage";
 
 // To read more about the used package: https://www.npmjs.com/package/spotify-web-api-node?activeTab=readme
 import SpotifyWebApi from 'spotify-web-api-node';
-import { rating } from "./utility";
 
 const clientId = "99e38fb1a67b4588b75b9498eda217a6";
 const clientSecret = "e53cf04f50734db9a06373e95b8deed5";
@@ -138,15 +138,31 @@ export async function addToPlaylist(playlistID: string, track: readonly string[]
   spotifyApi.addTracksToPlaylist(playlistID, track)
 }
 
-export async function playlistSongIDs(playlistID: string) {
+export async function getPlaylistSongIDs(playlistID: string): Promise<string[]> {
   //var fields:string = "items(track(id))"; // fix this to only retrieve songIDs
   var response = (await spotifyApi.getPlaylistTracks(playlistID)).body.items;
-  var songIDs: any[] = [] //using any isn't good but I am tired
-  for (let i=0; i++; i<response.length){
-      songIDs.push(response[i].track?.id)
+  
+  const songIDs: string[] = [];
+  for (const trackObj of response) {
+    if (!trackObj.track) continue;
+    songIDs.push(trackObj.track.id);
   }
-  console.log("Retrieved all song IDs from playlist"+ songIDs);
+  console.log(`Retrieved ${songIDs.length} song IDs from playlist ${playlistID}`);
   return songIDs
+}
+
+
+export async function isCurrentSongInManagedPlaylist(): Promise<boolean> {
+  // Check if we have a set managed playlist
+  if (!Storage.managedPlaylistId) return false;
+
+  // Check if there is currently a song playing
+  const currentSong = await getCurrentSong();
+  if (!currentSong) return false;
+
+  // Check if that songs ID is part of the managed playlist
+  const playlistSongIds = await getPlaylistSongIDs(Storage.managedPlaylistId);
+  return !!playlistSongIds.find(id => id === currentSong);
 }
 //#endregion
 

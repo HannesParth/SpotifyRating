@@ -1,32 +1,53 @@
 import '../assets/main.css'
 
-import { StrictMode } from 'react';
+import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 function SongRate(): React.JSX.Element {
+  // --- Checks: Signed in and Song Playing ---
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [songPlaying, setSongPlaying] = useState<boolean | null>(null);
 
-    const handlePlus = async () => {
-        const allowed = await window.backend.isSongRatingAllowed();
-        if (!allowed)
-            return;
-    
-        window.backend.rateCurrentSong(1);
-    };
+  useEffect(() => {
+    window.electron.ipcRenderer.on('set-sign-in-state', (_: any, state: boolean) => {
+      setSignedIn(state);
+    });
+  }, []);
 
-    const handleMinus = async () => {
-        const allowed = await window.backend.isSongRatingAllowed();
-        if (!allowed)
-            return;
+  useEffect(() => {
+    window.electron.ipcRenderer.on('set-song-playing', (_: any, state: boolean) => {
+      setSongPlaying(state);
+    });
+  }, []);
 
-        window.backend.rateCurrentSong(-1);
-    };
 
-    return (
-        <div className="song-rate-div">
-            <button className="song-rate-plus" onClick={handlePlus}>+</button>
-            <button className="song-rate-minus" onClick={handleMinus}>-</button>
-        </div>
-    );
+  // --- Button Calls ---
+  const handlePlus = async () => {
+    window.backend.rateCurrentSong(1);
+  };
+
+  const handleMinus = async () => {
+    window.backend.rateCurrentSong(-1);
+  };
+
+  return (
+    <div className="song-rate-div">
+      <button 
+        className="song-rate-plus" 
+        onClick={handlePlus} 
+        disabled={!signedIn || !songPlaying}
+      >
+        +
+      </button>
+      <button 
+        className="song-rate-minus" 
+        onClick={handleMinus} 
+        disabled={!signedIn || !songPlaying}
+      >
+        -
+      </button>
+    </div>
+  );
 }
 
 createRoot(document.getElementById('overlay-song-rate')!).render(

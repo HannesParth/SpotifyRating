@@ -59,6 +59,8 @@ code {
   font-weight: 700;
 }
 
+
+
 /* --- Selfmade classes --- */
 #overlay-test {
   display: flex;
@@ -123,6 +125,10 @@ code {
   height: 100%;
 }
 
+
+
+
+
 .segment {
   background: white;
   border-radius: 4px;
@@ -133,6 +139,8 @@ code {
   background-color: #1db954;
   border-radius: 2px;
 }
+
+
 
 .spotify-button {
   background-color: #1db954; /* Spotify-Grün */
@@ -180,9 +188,13 @@ code {
   border-radius: 50% 0px 0px 50%;
   border: none;
 }
-
 .song-rate-plus:hover {
   background-color: #1ed760;
+}
+.song-rate-plus:disabled {
+  background-color: #169241;
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .song-rate-minus {
@@ -194,9 +206,13 @@ code {
   border-radius: 0px 50% 50% 0px;
   border: none;
 }
-
 .song-rate-minus:hover {
   background-color: #e93131
+}
+.song-rate-minus:disabled {
+  background-color: #750f0f;
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 

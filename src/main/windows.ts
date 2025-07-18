@@ -3,8 +3,8 @@ import { BrowserWindow, ipcMain } from 'electron';
 import { is } from '@electron-toolkit/utils'
 import { createOverlayWindow, InfoPopupData } from './utility';
 import { join } from 'path'
-import { startSpotifyMonitor } from './spotifyMonitor';
-import { registerHandler } from './testCalls';
+import { startSongPlayingCheck, startSpotifyMonitor } from './spotifyMonitor';
+import { registerHandler as registerTestButtonHandler } from './testCalls';
 
 
 const showTestButton: boolean = true;
@@ -92,8 +92,9 @@ export function createOverlay(): void {
   allNonPopups.push(segmentBarOverlay);
 
   setPlaylistOverlay.on('ready-to-show', () => {
-    // those processes are quit when spotify is quit
+    // those processes are quit when this app is quit
     //startSpotifyMonitor(showAllWindows, hideAllWindows);
+    startSongPlayingCheck(() => setSongPlayingState(true), () => setSongPlayingState(false));
     segmentBarStartY = segmentBarOverlay.getPosition()[1];
   });
 
@@ -115,7 +116,7 @@ function showAllWindows(): void {
 //#endregion
 
 if (showTestButton) {
-  registerHandler();
+  registerTestButtonHandler();
 }
 
 
@@ -124,9 +125,25 @@ export function showOutput(msg: string): void {
   outputOverlay.webContents.send('display-output', msg);
 }
 
+
+/**
+ * Lets the windows know wether the user is logged in.
+ * Currently, this means that our app has the users access token in the RAM.
+ */
 export function setLoggedInState(state: boolean): void {
   loginOverlay.webContents.send('set-sign-in-state', state);
   setPlaylistOverlay.webContents.send('set-sign-in-state', state);
+  segmentBarOverlay.webContents.send('set-sign-in-state', state);
+  songRateOverlay.webContents.send('set-sign-in-state', state);
+}
+
+/**
+ * Lets the windows responsible for rating know wether there is currently a song
+ * playing that is part of a managed playlist.
+ */
+export function setSongPlayingState(state: boolean): void {
+  segmentBarOverlay.webContents.send('set-song-playing', state);
+  songRateOverlay.webContents.send('set-song-playing', state);
 }
 
 /**
@@ -177,11 +194,11 @@ ipcMain.on('resize-segment-window', (_, withPopup: boolean) => {
     segmentBarOverlay.setSize(segmentBarWithPopupSize.width, segmentBarWithPopupSize.height);
     const yDelta = segmentBarWithPopupSize.height - segmentBarSize.height;
     segmentBarOverlay.setPosition(pos[0], segmentBarStartY - yDelta);
-    console.log("Resizing to ", segmentBarWithPopupSize);
+    //console.log("Resizing to ", segmentBarWithPopupSize);
   } else {
     segmentBarOverlay.setSize(segmentBarSize.width, segmentBarSize.height);
     segmentBarOverlay.setPosition(pos[0], segmentBarStartY);
-    console.log("Resizing to ", segmentBarSize);
+    //console.log("Resizing to ", segmentBarSize);
   }
 
   segmentBarOverlay.setResizable(false);

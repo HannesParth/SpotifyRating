@@ -8,27 +8,35 @@ const storeKey: string = 'ratedSongs';
 let lastStored: Date;
 let lastLoaded: Date;
 
-export const ratedSongsRAM = new Map<string, RatedSong>();
+const ratedSongsRAM = new Map<string, RatedSong>();
+
+/**
+ * ID of the currently managed playlist.
+ * I'm limiting it to 1 for this prototype, among other reasons because
+ * you cannot differentiate from which playlist a song is if you have
+ * multiple playlists with the same song.
+ */
+let managedPlaylistId: string = "";
 
 
-export function addSongRating(track_id: string, rating: rating): void {
+function addSongRating(track_id: string, rating: rating): void {
   const song = getOrMakeRatedSong(track_id);
   song.rating = rating;
   ratedSongsRAM.set(track_id, song);
 }
 
-export function addSegmentRating(track_id: string, segment_index: number, rating: rating): void {
+function addSegmentRating(track_id: string, segment_index: number, rating: rating): void {
   const song = getOrMakeRatedSong(track_id);
   song.segment_index = segment_index;
   song.segment_rating = rating;
   ratedSongsRAM.set(track_id, song);
 }
 
-export function isSongRated(track_id: string): boolean {
+function isSongRated(track_id: string): boolean {
   return ratedSongsRAM.has(track_id) && ratedSongsRAM[track_id].rating !== null;
 }
 
-export function isSegmentRated(track_id: string): boolean {
+function isSegmentRated(track_id: string): boolean {
   return ratedSongsRAM.has(track_id) 
     && ratedSongsRAM.get(track_id)?.segment_index !== null 
     && ratedSongsRAM.get(track_id)?.segment_rating !== null
@@ -46,6 +54,17 @@ function getOrMakeRatedSong(track_id: string): RatedSong {
 // export function getStoredSongs(): RatedSong[] {
 //   const songs = store.get(storeKey);
 // }
+
+
+
+export default {
+  addSongRating,
+  addSegmentRating,
+  isSongRated, 
+  isSegmentRated,
+  managedPlaylistId
+};
+
 
 /**
  * Saransh's script expects both ratings to be in one object.
