@@ -1,10 +1,11 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
-import { startSpotifyAuthFlow, searchAllPlaylistsForName, getCurrentSong } from './spotifyAPI';
+import { startSpotifyAuthFlow, searchAllPlaylistsForName, getCurrentSong, getAllPlaylistSongs } from './spotifyAPI';
 import { createOverlay, setLoggedInState } from './windows';
 import { rating } from './utility';
-import Storage from './storage';
+import Storage, {  getStorage } from './storage';
+import { startSongPlayingCheck } from './spotifyMonitor';
 
 
 
@@ -71,7 +72,6 @@ ipcMain.on('choose-managed-playlist', async (_, playlistName: string) => {
 
 // --- Rating ---
 
-
 ipcMain.handle('rate-current-song', async (_, rating: rating) => {
   var songID = await getCurrentSong();
   if (!songID) {
@@ -88,6 +88,17 @@ ipcMain.handle('rate-segment', async (_, rating: rating, seg_index: number) => {
 
   Storage.addSegmentRating(songID, seg_index, rating);
   console.log(`Rated song [${songID}], segment [${seg_index}], with rating [${rating}]`);
+});
+
+// --- Recommend ---
+
+const nodecallspython = require("node-calls-python");
+
+const py = nodecallspython.interpreter;
+
+py.import("path/to/Recommender/recommender.py").then(async function(pymodule) {
+    const result = await py.call(pymodule, "recommend", getCurrentSong, getStorage);
+    console.log(result);
 });
 
 
