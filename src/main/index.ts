@@ -1,8 +1,8 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
-import { startSpotifyAuthFlow, searchAllPlaylists, getCurrentSong } from './spotifyAPI';
-import { createOverlay, setLoggedInState, showInfoPopup, showInfoPopupAbove, songRateOverlay } from './windows';
+import { startSpotifyAuthFlow, searchAllPlaylistsForName, getCurrentSong } from './spotifyAPI';
+import { createOverlay, setLoggedInState } from './windows';
 import { rating } from './utility';
 import Storage from './storage';
 
@@ -57,7 +57,7 @@ ipcMain.handle('spotify-logout', () => {
 
 ipcMain.on('choose-managed-playlist', async (_, playlistName: string) => {
   console.log("Got name of playlist to manage: " + playlistName);
-  var playlistID = await searchAllPlaylists(playlistName);
+  var playlistID = await searchAllPlaylistsForName(playlistName);
   if (playlistID == null){
     console.error("Could not find ID of playlist: " + playlistName);
     return;

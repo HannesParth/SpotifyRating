@@ -24,7 +24,8 @@ var spotifyApi = new SpotifyWebApi({
 const scopes = [
   'playlist-read-private',
   'playlist-modify-public',
-  'playlist-modify-private'
+  'playlist-modify-private',
+  'user-read-currently-playing'
 ];
 const authUrl = spotifyApi.createAuthorizeURL(scopes, 'state-key');
 
@@ -83,10 +84,7 @@ async function ensureToken(): Promise<string | null> {
 
 
 
-
-
-//#region Playlist
-
+//#region User
 async function getUser() {
   // Get the authenticated user
   return spotifyApi.getMe();
@@ -104,6 +102,13 @@ async function getUserID(): Promise<string>{
   return user.body.id;
 }
 
+
+//#endregion
+
+
+
+//#region Playlist
+
 // async function getAllPlaylist(): Promise<string> {
 // // Get a user's playlists
 // var userID = await getUserID();
@@ -116,18 +121,18 @@ async function getUserID(): Promise<string>{
 //   return allPlaylists;
 // }
 
-export async function searchAllPlaylists(playlistName: string): Promise<string | null> {
+export async function searchAllPlaylistsForName(playlistName: string): Promise<string | null> {
   var response = await spotifyApi.getUserPlaylists(await getUserID());
   var allP = response.body.items;
 
   var  foundP = allP.find(
-      (playlist) => playlist.name === playlistName
-    );
-    return foundP ? foundP.id : null
+    (playlist) => playlist.name === playlistName
+  );
+  return foundP ? foundP.id : null
 }
 
 //returns all playlist tracks with all info
-export async function playlistSongs(playlistID: string){
+export async function getAllPlaylistSongs(playlistID: string){
   var songs = (await spotifyApi.getPlaylistTracks(playlistID)).body;
   console.log("Retrieved all songs from playlist"+ songs);
   return songs
@@ -147,8 +152,28 @@ export async function getPlaylistSongIDs(playlistID: string): Promise<string[]> 
     if (!trackObj.track) continue;
     songIDs.push(trackObj.track.id);
   }
-  console.log(`Retrieved ${songIDs.length} song IDs from playlist ${playlistID}`);
+  //console.log(`Retrieved ${songIDs.length} song IDs from playlist ${playlistID}`);
   return songIDs
+}
+
+//#endregion
+
+
+
+
+//#region Track
+export async function getCurrentSong(): Promise<string | null> {
+  const response = await spotifyApi.getMyCurrentPlayingTrack();
+  const playingObj = response.body.item;
+
+  if (!playingObj) {
+    console.warn("Could not get current song!");
+    return null
+  }
+
+  const songID: string = playingObj.id;
+  //console.log("Got songID: ", songID);
+  return songID;
 }
 
 
@@ -163,25 +188,6 @@ export async function isCurrentSongInManagedPlaylist(): Promise<boolean> {
   // Check if that songs ID is part of the managed playlist
   const playlistSongIds = await getPlaylistSongIDs(Storage.managedPlaylistId);
   return !!playlistSongIds.find(id => id === currentSong);
-}
-//#endregion
-
-
-
-
-//#region Rating
-export async function getCurrentSong(): Promise<string | null> {
-  const response = await spotifyApi.getMyCurrentPlayingTrack();
-  const playingObj = response.body.item;
-
-  if (!playingObj) {
-    console.warn("Could not get current song!");
-    return null
-  }
-
-  const songID: string = playingObj.id;
-  console.log("Got songID: ", songID);
-  return songID;
 }
 //#endregion
 
