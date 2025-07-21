@@ -1,5 +1,5 @@
 import { rating } from "./utility";
-import Store from "electron-store";
+//import Store from "electron-store";
 
 
 //const store = new Store();
@@ -49,6 +49,20 @@ function getOrMakeRatedSong(track_id: string): RatedSong {
     return ratedSongsRAM[track_id];
   }
 }
+
+// export in correct format for the recommender
+export function getStorage() : RatedSong[] {
+  var storage = Array.from(ratedSongsRAM.values())
+  return storage
+}
+
+// export function getStoredSongs(): RatedSong[] {
+//   const songs = ratedSongsRAM.get(storeKey);
+//   if (songs == undefined){
+//     throw Error("Could not retrieve rated songs")
+//   }
+//   return [songs]
+// }
 
 // this is causing problems, I'll try again later
 // export function getStoredSongs(): RatedSong[] {
