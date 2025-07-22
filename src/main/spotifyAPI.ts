@@ -25,7 +25,8 @@ const scopes = [
   'playlist-read-private',
   'playlist-modify-public',
   'playlist-modify-private',
-  'user-read-currently-playing'
+  'user-read-currently-playing',
+  'user-read-playback-state'
 ];
 const authUrl = spotifyApi.createAuthorizeURL(scopes, 'state-key');
 
@@ -162,7 +163,38 @@ export async function getPlaylistSongIDs(playlistID: string): Promise<string[]> 
 
 
 //#region Track
+
+/**
+ * Get the ID of the currently playing track, but only if it is in the current managed playlist.
+ * Otherwise returns null
+ */
 export async function getCurrentSong(): Promise<string | null> {
+  const response = await spotifyApi.getMyCurrentPlaybackState();
+
+  if (!response.body) {
+    return null;
+  }
+  if (!response.body.item) {
+    console.warn("getCurrentSong: item was null");
+    return null;
+  }
+  if (!response.body.context || (response.body.context && response.body.context.type !== "playlist")) {
+    console.warn("getCurrentSong: user is not in a playlist");
+    return null;
+  }
+
+  const songID: string = response.body.item.id;
+  const playlistUri = response.body.context.uri;
+  const playlistId = playlistUri.split(':')[2];
+
+  if (playlistId !== Storage.managedPlaylistId) {
+    console.warn("Current song is not in managed playlist");
+    return null;
+  }
+  return songID;
+}
+
+export async function getCurrentPlayingSong(): Promise<string | null> {
   const response = await spotifyApi.getMyCurrentPlayingTrack();
   const playingObj = response.body.item;
 
@@ -182,12 +214,12 @@ export async function isCurrentSongInManagedPlaylist(): Promise<boolean> {
   if (!Storage.managedPlaylistId) return false;
 
   // Check if there is currently a song playing
-  const currentSong = await getCurrentSong();
-  if (!currentSong) return false;
+  const songId = await getCurrentSong();
+  if (!songId) return false;
 
   // Check if that songs ID is part of the managed playlist
   const playlistSongIds = await getPlaylistSongIDs(Storage.managedPlaylistId);
-  return !!playlistSongIds.find(id => id === currentSong);
+  return !!playlistSongIds.find(id => id === songId);
 }
 //#endregion
 

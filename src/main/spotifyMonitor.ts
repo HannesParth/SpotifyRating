@@ -1,5 +1,4 @@
 // src/main/spotifyMonitor.ts
-import activeWindow from 'active-win';
 import { isCurrentSongInManagedPlaylist } from './spotifyAPI';
 
 type Callback = () => void;
@@ -47,23 +46,7 @@ export function startSpotifyMonitor(
   onFocus = onSpotifyFocus;
   onBlur = onSpotifyBlur;
 
-  interval = setInterval(async () => {
-    try {
-      const active = await activeWindow();
-      const windowName = active?.owner?.name?.toLowerCase();
-      const isSpotify = windowName?.includes('spotify') ?? false;
-      const isOwnApp = windowName?.includes('electron') ?? false;
-      
-      const isRelevant = isSpotify || isOwnApp;
 
-      if (isRelevant !== lastState) {
-        lastState = isRelevant;
-        isRelevant ? onFocus() : onBlur();
-      }
-    } catch (err) {
-      console.error("Failed to get active window:", err);
-    }
-  }, pollInterval);
 }
 
 export function stopSpotifyMonitor() {
