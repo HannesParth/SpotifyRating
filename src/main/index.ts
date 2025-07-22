@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
-import { startSpotifyAuthFlow, searchAllPlaylistsForName, getCurrentSong, addTrackToPlaylist } from './spotifyAPI';
+import { startSpotifyAuthFlow, searchAllPlaylistsForName, getCurrentSongID, addTrackToPlaylist, getCurrentSong } from './spotifyAPI';
 import { createOverlay, setLoggedInState, showOutput } from './windows';
 import { rating } from './utility';
 import Storage from './storage';
@@ -73,21 +73,21 @@ ipcMain.on('choose-managed-playlist', async (_, playlistName: string) => {
 // --- Rating ---
 
 ipcMain.handle('rate-current-song', async (_, rating: rating) => {
-  var songID = await getCurrentSong();
-  if (!songID) {
+  var song = await getCurrentSong();
+  if (!song) {
     return;
   }
 
-  Storage.addSongRating(songID, rating);
-  console.log("Rated current song: ", songID, ", with rating: ", rating);
+  Storage.addSongRating(song, rating);
+  console.log("Rated current song: ", song, ", with rating: ", rating);
 });
 
 ipcMain.handle('rate-segment', async (_, rating: rating, seg_index: number) => {
-  var songID = await getCurrentSong();
-  if (!songID) return;
+  var song = await getCurrentSong();
+  if (!song) return;
 
-  Storage.addSegmentRating(songID, seg_index, rating);
-  console.log(`Rated song [${songID}], segment [${seg_index}], with rating [${rating}]`);
+  Storage.addSegmentRating(song, seg_index, rating);
+  console.log(`Rated song [${song.id}], segment [${seg_index}], with rating [${rating}]`);
 });
 
 
@@ -133,7 +133,7 @@ export async function recommendNextSong() {
     return;
   }
   
-  const songId = await getCurrentSong();
+  const songId = await getCurrentSongID();
   if (!songId) {
     return;
   }

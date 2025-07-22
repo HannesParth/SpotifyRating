@@ -1,6 +1,6 @@
 import { ipcMain } from "electron";
 import { setSegments, setSongPlayingState } from "./windows";
-import { getAllPlaylistSongs, getCurrentSong, isTrackLastOfPlaylist } from "./spotifyAPI";
+import { getAllPlaylistSongs, getCurrentSongID, isTrackLastOfPlaylist } from "./spotifyAPI";
 import { loadPythonModule } from "./index";
 
 
@@ -18,7 +18,7 @@ async function loadPython() {
 }
 
 async function checkIsLastTrack() {
-    const song = await getCurrentSong();
+    const song = await getCurrentSongID();
     if (!song) {
         console.log("Null song");
         return;

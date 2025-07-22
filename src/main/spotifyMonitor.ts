@@ -1,5 +1,5 @@
 // src/main/spotifyMonitor.ts
-import { getCurrentSong, isTrackLastOfPlaylist } from './spotifyAPI';
+import { getCurrentSongID, isTrackLastOfPlaylist } from './spotifyAPI';
 import Storage from "./storage";
 import { rating } from './utility';
 
@@ -31,7 +31,7 @@ export function startSongPlayingCheck(
     
     // --- check if a song from the managed playlist is chosen ---
     try {
-      songId = await getCurrentSong();
+      songId = await getCurrentSongID();
       const isPlaying = !!songId;
       //console.log("Is a song from the managed playlist playing? ", isPlaying);
 

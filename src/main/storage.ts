@@ -19,17 +19,17 @@ const ratedSongsRAM = new Map<string, RatedSong>();
 let managedPlaylistId: string = "";
 
 
-function addSongRating(track_id: string, rating: rating): void {
-  const song = getOrMakeRatedSong(track_id);
+function addSongRating(track:SpotifyApi.TrackObjectFull, rating: rating): void {
+  const song = getOrMakeRatedSong(track);
   song.rating = rating;
-  ratedSongsRAM.set(track_id, song);
+  ratedSongsRAM.set(track.id, song);
 }
 
-function addSegmentRating(track_id: string, segment_index: number, rating: rating): void {
-  const song = getOrMakeRatedSong(track_id);
+function addSegmentRating(track:SpotifyApi.TrackObjectFull, segment_index: number, rating: rating): void {
+  const song = getOrMakeRatedSong(track);
   song.segment_index = segment_index;
   song.segment_rating = rating;
-  ratedSongsRAM.set(track_id, song);
+  ratedSongsRAM.set(track.id, song);
 }
 
 function isSongRated(track_id: string): boolean {
@@ -62,9 +62,10 @@ function getSegmentRating(track_id: string): {segment_index: number, segment_rat
   }
 }
 
-function getOrMakeRatedSong(track_id: string): RatedSong {
+function getOrMakeRatedSong(track: SpotifyApi.TrackObjectFull): RatedSong {
+  const track_id:string = track.id;
   if (!ratedSongsRAM.has(track_id)) {
-    return new RatedSong(track_id);
+    return new RatedSong(track);
   } else {
     return ratedSongsRAM[track_id];
   }
@@ -109,12 +110,16 @@ export default {
  */
 export class RatedSong {
   track_id: string;
+  title :string;
+  artist: string;
   rating: rating | null;
   segment_index: number | null;
   segment_rating: rating | null;
 
-  constructor(trackId: string) {
-    this.track_id = trackId;
+  constructor(track: SpotifyApi.TrackObjectFull) {
+    this.track_id = track.id;
+    this.title = track.name;
+    this.artist = track.artists[0].name
     this.rating = null;
     this.segment_index = null;
     this.segment_rating = null;
