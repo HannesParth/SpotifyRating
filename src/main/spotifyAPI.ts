@@ -184,7 +184,6 @@ export async function searchByNameAndArtist(title:string, artist:string){
   const both = 'track:'+title+' artist:'+artist
   spotifyApi.searchTracks(both)
   .then(function(data) {
-    data.body.tracks?.items[0].id
     console.log('Search for track of title '+ title+ ' from artist: '+ artist);
     console.log('Search returns track with title '+ data.body.tracks?.items[0].name + ' from artist: '+ data.body.tracks?.items[0].name + 'with spotify trackID' + data.body.tracks?.items[0].id); //just take the first result
   }, function(err) {
