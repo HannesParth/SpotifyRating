@@ -180,15 +180,36 @@ export async function returnTrack(spotifySongID: string) {
 // } //do not use spotifyAPI.methed for this, make direct spotify web api request
 
 // Search tracks whose artist's name contain artist and track name contains title
-export async function searchByNameAndArtist(title:string, artist:string){
+export async function searchByNameAndArtist(title:string, artist:string) { //idk why this says I'm returning an undefined
   const both = 'track:'+title+' artist:'+artist
-  spotifyApi.searchTracks(both)
-  .then(function(data) {
-    console.log('Search for track of title '+ title+ ' from artist: '+ artist);
-    console.log('Search returns track with title '+ data.body.tracks?.items[0].name + ' from artist: '+ data.body.tracks?.items[0].name + 'with spotify trackID' + data.body.tracks?.items[0].id); //just take the first result
-  }, function(err) {
-    console.log('Was not able to find song by title and artist', err);
-  });
+
+  var response = await spotifyApi.searchTracks(both);
+
+  if(!response){
+    console.log('Was not able to find song of title '+ title+ ' from artist: ' + artist);
+    return null
+  }else{
+    console.log('Found song id ' + response.body.tracks?.items[0].id)
+    return response.body.tracks?.items[0].id
+  }
+
+
+  // spotifyApi.searchTracks(both)
+  // .then(function(data) {
+  //   console.log('Search for track of title '+ title+ ' from artist: '+ artist);
+  //   console.log('Search returns track with title '+ data.body.tracks?.items[0].name + 
+  //   ' from artist: '+ data.body.tracks?.items[0].name + 
+  //   ' with spotify trackID ' + data.body.tracks?.items[0].id); //just take the first result
+  //   if(!(data.body.tracks?.items[0].id)){
+  //     return null
+  //   }
+  //   else{
+  //     return data.body.tracks?.items[0].id!
+  //   }
+  // }, function(err) {
+  //   console.log('Was not able to find song by title and artist', err);
+  //   return null
+  // });
 }
 
 
