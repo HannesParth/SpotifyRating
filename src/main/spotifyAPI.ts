@@ -110,17 +110,6 @@ async function getUserID(): Promise<string>{
 
 //#region Playlist
 
-// async function getAllPlaylist(): Promise<string> {
-// // Get a user's playlists
-// var userID = await getUserID();
-// var allPlaylists = await spotifyApi.getUserPlaylists(userID)
-//   .then(function(data) {
-//     console.log('Retrieved playlists', data.body);
-//   },function(err) {
-//     console.log('Something went wrong!', err);
-//   })
-//   return allPlaylists;
-// }
 
 export async function searchAllPlaylistsForName(playlistName: string): Promise<string | null> {
   var response = await spotifyApi.getUserPlaylists(await getUserID());
@@ -179,6 +168,30 @@ export async function getPlaylistSongIDs(playlistID: string): Promise<string[]> 
   //console.log(`Retrieved ${songIDs.length} song IDs from playlist ${playlistID}`);
   return songIDs
 }
+
+// export async function returnTrack(spotifySongID: string) {
+//   var response = await spotifyApi.getTrack(spotifySongID);
+//   var track = response.body
+//   return track;
+// }
+
+// export async function searchByNameAndArtist(title: string, artist: string) {
+//   const response = (await spotifyApi.searchTracks(title, {limit:1, offset:0})).body;
+// } //do not use spotifyAPI.methed for this, make direct spotify web api request
+
+// Search tracks whose artist's name contain artist and track name contains title
+export async function searchByNameAndArtist(title:string, artist:string){
+  const both = 'track:'+title+' artist:'+artist
+  spotifyApi.searchTracks(both)
+  .then(function(data) {
+    data.body.tracks?.items[0].id
+    console.log('Search for track of title '+ title+ ' from artist: '+ artist);
+    console.log('Search returns track with title '+ data.body.tracks?.items[0].name + ' from artist: '+ data.body.tracks?.items[0].name + 'with spotify trackID' + data.body.tracks?.items[0].id); //just take the first result
+  }, function(err) {
+    console.log('Was not able to find song by title and artist', err);
+  });
+}
+
 
 //#endregion
 
