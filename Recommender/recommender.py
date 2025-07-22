@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 import ast
@@ -23,7 +24,8 @@ def parse_sections_start(x):
 warnings.filterwarnings("ignore")
 
 # === File path ===
-SONG_DATA_PATH = "msd_processed.csv"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SONG_DATA_PATH = os.path.join(BASE_DIR, "msd_processed.csv")
 
 # === Load and clean CSV ===
 df = pd.read_csv(SONG_DATA_PATH)
@@ -171,7 +173,11 @@ def recommend_next_song(feedback: List[Dict]) -> Optional[str]:
             {entry['track_id'] for entry in feedback})]
         if not unrated.empty:
             print("[INFO] Returning random unrated song because no valid user vector.")
-            return unrated.sample(1).iloc[0]['track_id']
+            return {
+                "title": unrated.sample(1).iloc[0]['title'],
+                "artist": unrated.sample(1).iloc[0]['artist'],
+                "result": "unrated"
+            }
         print(
             "[INFO] No recommendation could be made — dataset exhausted or empty feedback.")
         return None
@@ -199,7 +205,11 @@ def recommend_next_song(feedback: List[Dict]) -> Optional[str]:
     top = candidates.sort_values(by='similarity', ascending=False).iloc[0]
     print(
         f"[INFO] Recommended next song: {top['track_id']} - {top['title']} by {top['artist']}")
-    return top['track_id']
+    return {
+        "title": top['title'],
+        "artist": top['artist'],
+        "result": "recommended"
+    }
 
 
 def get_sections_data(track_id: str) -> Dict[str, Any]:

@@ -7,6 +7,7 @@ function SongRate(): React.JSX.Element {
   // --- Checks: Signed in and Song Playing ---
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [songPlaying, setSongPlaying] = useState<boolean | null>(null);
+  const [songRating, setSongRating] = useState<number | null>(null);
 
   useEffect(() => {
     window.electron.ipcRenderer.on('set-sign-in-state', (_: any, state: boolean) => {
@@ -17,6 +18,12 @@ function SongRate(): React.JSX.Element {
   useEffect(() => {
     window.electron.ipcRenderer.on('set-song-playing', (_: any, state: boolean) => {
       setSongPlaying(state);
+    });
+  }, []);
+
+  useEffect(() => {
+    window.electron.ipcRenderer.on('set-song-rating', (_: any, rating: -1 | 0 | 1) => {
+      setSongRating(rating);
     });
   }, []);
 
@@ -34,6 +41,7 @@ function SongRate(): React.JSX.Element {
     <div className="song-rate-div">
       <button 
         className="song-rate-plus" 
+        style={{ border: songRating === 1 ? '2px solid #00792aff' : 'none' }}
         onClick={handlePlus} 
         disabled={!signedIn || !songPlaying}
       >
@@ -41,6 +49,7 @@ function SongRate(): React.JSX.Element {
       </button>
       <button 
         className="song-rate-minus" 
+        style={{ border: songRating === -1 ? '2px solid #670000ff' : 'none' }}
         onClick={handleMinus} 
         disabled={!signedIn || !songPlaying}
       >

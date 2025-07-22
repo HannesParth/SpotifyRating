@@ -1,10 +1,11 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
-import { startSpotifyAuthFlow, searchAllPlaylistsForName, getCurrentPlayingSong, getAllPlaylistSongs, getCurrentSong } from './spotifyAPI';
-import { createOverlay, setLoggedInState } from './windows';
+import { startSpotifyAuthFlow, searchAllPlaylistsForName, getCurrentSong, addTrackToPlaylist } from './spotifyAPI';
+import { createOverlay, setLoggedInState, showOutput } from './windows';
 import { rating } from './utility';
-import Storage, {  getStorage } from './storage';
+import Storage from './storage';
+import path from 'path';
 
 
 
@@ -72,7 +73,7 @@ ipcMain.on('choose-managed-playlist', async (_, playlistName: string) => {
 // --- Rating ---
 
 ipcMain.handle('rate-current-song', async (_, rating: rating) => {
-  var songID = await getCurrentPlayingSong();
+  var songID = await getCurrentSong();
   if (!songID) {
     return;
   }
@@ -82,30 +83,73 @@ ipcMain.handle('rate-current-song', async (_, rating: rating) => {
 });
 
 ipcMain.handle('rate-segment', async (_, rating: rating, seg_index: number) => {
-  var songID = await getCurrentPlayingSong();
+  var songID = await getCurrentSong();
   if (!songID) return;
 
   Storage.addSegmentRating(songID, seg_index, rating);
   console.log(`Rated song [${songID}], segment [${seg_index}], with rating [${rating}]`);
 });
 
+
+
 // --- Recommend ---
 
 const nodecallspython = require("node-calls-python");
 
 const py = nodecallspython.interpreter;
+const recommenderDir = path.join(__dirname, "../../Recommender/recommender.py");
+let pymodule: any;
+
+export async function loadPythonModule() {
+  console.log("Starting python module load");
+  pymodule = await py.import(recommenderDir);
+  console.log("Finished loading python module");
+  showOutput("Finished loading python module.");
+}
+
+loadPythonModule();
+
+type RecommendationAnswer = {
+  title: string,
+  artist: string,
+  result: "recommended" | "unrated",
+}
+
+function isRecommendationAnswer(obj: any): obj is RecommendationAnswer {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    typeof obj.title === "string" &&
+    typeof obj.artist === "string" &&
+    (obj.result === "recommended" || obj.result === "unrated")
+  );
+}
 
 export async function recommendNextSong() {
-  py.import("../../Recommender/recommender.py").then(async function(pymodule) {
-    const songId = await getCurrentSong();
-    if (!songId) {
-      return;
-    }
-    const ratedSongs = getStorage();
-    
-    const result = await py.call(pymodule, "recommend", songId, ratedSongs);
-    console.log(result);
-  });
+  console.log("\nRecommending song now");
+
+  if (!pymodule) {
+    console.error("Loading recommender python module failed");
+    return;
+  }
+  
+  const songId = await getCurrentSong();
+  if (!songId) {
+    return;
+  }
+  const ratedSongs = Storage.getForExport();
+  console.log("Recommender gets: \n", ratedSongs);
+  
+  const result = await py.call(pymodule, "recommend_next_song", ratedSongs);
+  console.log("Got recommendation: ", result, " when playing song ", songId);
+
+  if (!isRecommendationAnswer(result)) {
+    console.log("Recommendation result was not a string");
+    return;
+  }
+
+  // console.log("Trying to add to playlist");
+  // await addTrackToPlaylist(Storage.managedPlaylistId, result);
 }
 
 

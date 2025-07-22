@@ -1,15 +1,30 @@
 import { ipcMain } from "electron";
 import { setSegments, setSongPlayingState } from "./windows";
-
-
+import { getAllPlaylistSongs, getCurrentSong, isTrackLastOfPlaylist } from "./spotifyAPI";
+import { loadPythonModule } from "./index";
 
 
 export function registerHandler(): void {
     // --- Test Button ---
-    ipcMain.handle('test-button-call', () => {
+    ipcMain.handle('test-button-call', async () => {
         // put any test calls here
-        simulatePlayingSongTest();
+        await loadPython();
     });
+}
+
+
+async function loadPython() {
+    await loadPythonModule();
+}
+
+async function checkIsLastTrack() {
+    const song = await getCurrentSong();
+    if (!song) {
+        console.log("Null song");
+        return;
+    }
+    const isLast = await isTrackLastOfPlaylist(song);
+    console.log("is last? ", isLast);
 }
 
 function segmentTest(): void {

@@ -3,8 +3,10 @@ import { BrowserWindow, ipcMain } from 'electron';
 import { is } from '@electron-toolkit/utils'
 import { createOverlayWindow, InfoPopupData } from './utility';
 import { join } from 'path'
-import { startSongPlayingCheck, startSpotifyMonitor } from './spotifyMonitor';
+import { startSongPlayingCheck } from './spotifyMonitor';
 import { registerHandler as registerTestButtonHandler } from './testCalls';
+import { recommendNextSong } from '.';
+import { rating } from './utility';
 
 
 const showTestButton: boolean = true;
@@ -94,7 +96,12 @@ export function createOverlay(): void {
   setPlaylistOverlay.on('ready-to-show', () => {
     // those processes are quit when this app is quit
     //startSpotifyMonitor(showAllWindows, hideAllWindows);
-    startSongPlayingCheck(() => setSongPlayingState(true), () => setSongPlayingState(false));
+    startSongPlayingCheck(
+      () => setSongPlayingState(true), 
+      () => setSongPlayingState(false), 
+      recommendNextSong,
+      setSongRating
+    );
     segmentBarStartY = segmentBarOverlay.getPosition()[1];
   });
 
@@ -144,6 +151,10 @@ export function setLoggedInState(state: boolean): void {
 export function setSongPlayingState(state: boolean): void {
   segmentBarOverlay.webContents.send('set-song-playing', state);
   songRateOverlay.webContents.send('set-song-playing', state);
+}
+
+export function setSongRating(rating: rating): void {
+  songRateOverlay.webContents.send('set-song-rating', rating);
 }
 
 /**

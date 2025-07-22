@@ -133,15 +133,38 @@ export async function searchAllPlaylistsForName(playlistName: string): Promise<s
 }
 
 //returns all playlist tracks with all info
-export async function getAllPlaylistSongs(playlistID: string){
-  var songs = (await spotifyApi.getPlaylistTracks(playlistID)).body;
-  console.log("Retrieved all songs from playlist"+ songs);
-  return songs
+export async function getAllPlaylistSongs(playlistID: string) {
+  const response = await spotifyApi.getPlaylistTracks(playlistID);
+  const tracks = response.body.items;
+  return tracks;
 }
 
-//track an array of URIs of tracks to add to the playlist, I'm sorry
-export async function addToPlaylist(playlistID: string, track: readonly string[]) {
-  spotifyApi.addTracksToPlaylist(playlistID, track)
+export async function isTrackLastOfPlaylist(trackId: string): Promise<boolean> {
+  if (!Storage.managedPlaylistId) {
+    console.log("isLast: no managed playlist");
+    return false;
+  }
+
+  const tracks = await getAllPlaylistSongs(Storage.managedPlaylistId);
+  if (tracks.length < 1) {
+    console.log("isLast: no tracks");
+    return false;
+  }
+
+  //console.log("Got tracks: ", tracks.map(obj => obj.track?.name));
+  const last = tracks[tracks.length-1];
+  if (!last.track) {
+    console.log("isLast: last track is null");
+    return false;
+  }
+  return last.track.id === trackId;
+}
+
+
+export async function addTrackToPlaylist(playlistID: string, track: string) {
+  const trackUri = "spotify:track:" + track;
+  const data = [trackUri];
+  await spotifyApi.addTracksToPlaylist(playlistID, data);
 }
 
 export async function getPlaylistSongIDs(playlistID: string): Promise<string[]> {
@@ -169,6 +192,9 @@ export async function getPlaylistSongIDs(playlistID: string): Promise<string[]> 
  * Otherwise returns null
  */
 export async function getCurrentSong(): Promise<string | null> {
+  if (!spotifyApi.getAccessToken()) {
+    return null;
+  }
   const response = await spotifyApi.getMyCurrentPlaybackState();
 
   if (!response.body) {
@@ -187,6 +213,10 @@ export async function getCurrentSong(): Promise<string | null> {
   const playlistUri = response.body.context.uri;
   const playlistId = playlistUri.split(':')[2];
 
+  if (!Storage.managedPlaylistId) {
+    console.warn("getCurrentSong: managed Playlist not set");
+    return null;
+  }
   if (playlistId !== Storage.managedPlaylistId) {
     console.warn("Current song is not in managed playlist");
     return null;
@@ -208,19 +238,6 @@ export async function getCurrentPlayingSong(): Promise<string | null> {
   return songID;
 }
 
-
-export async function isCurrentSongInManagedPlaylist(): Promise<boolean> {
-  // Check if we have a set managed playlist
-  if (!Storage.managedPlaylistId) return false;
-
-  // Check if there is currently a song playing
-  const songId = await getCurrentSong();
-  if (!songId) return false;
-
-  // Check if that songs ID is part of the managed playlist
-  const playlistSongIds = await getPlaylistSongIDs(Storage.managedPlaylistId);
-  return !!playlistSongIds.find(id => id === songId);
-}
 //#endregion
 
 

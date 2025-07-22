@@ -33,13 +33,33 @@ function addSegmentRating(track_id: string, segment_index: number, rating: ratin
 }
 
 function isSongRated(track_id: string): boolean {
-  return ratedSongsRAM.has(track_id) && ratedSongsRAM[track_id].rating !== null;
+  const song = ratedSongsRAM.get(track_id);
+  if (!song) return false;
+  if (!song.rating) return false;
+  return song !== undefined && song.rating !== null;
 }
 
 function isSegmentRated(track_id: string): boolean {
   return ratedSongsRAM.has(track_id) 
     && ratedSongsRAM.get(track_id)?.segment_index !== null 
     && ratedSongsRAM.get(track_id)?.segment_rating !== null
+}
+
+function getSongRating(track_id: string): rating | null {
+  if (!isSongRated(track_id)) return null;
+
+  const song: RatedSong = ratedSongsRAM.get(track_id)!;
+  return song.rating
+}
+
+function getSegmentRating(track_id: string): {segment_index: number, segment_rating: number} | null{
+  if (!isSegmentRated(track_id)) return null;
+
+  const song: RatedSong = ratedSongsRAM[track_id];
+  return {
+    segment_index: song.segment_index!,
+    segment_rating: song.segment_rating!
+  }
 }
 
 function getOrMakeRatedSong(track_id: string): RatedSong {
@@ -51,7 +71,7 @@ function getOrMakeRatedSong(track_id: string): RatedSong {
 }
 
 // export in correct format for the recommender
-export function getStorage() : RatedSong[] {
+function getForExport() : RatedSong[] {
   var storage = Array.from(ratedSongsRAM.values())
   return storage
 }
@@ -76,6 +96,9 @@ export default {
   addSegmentRating,
   isSongRated, 
   isSegmentRated,
+  getSongRating,
+  getSegmentRating,
+  getForExport,
   managedPlaylistId
 };
 
