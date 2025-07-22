@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
-import { startSpotifyAuthFlow, searchAllPlaylistsForName, getCurrentSongID, addTrackToPlaylist, getCurrentSong } from './spotifyAPI';
+import { startSpotifyAuthFlow, searchAllPlaylistsForName, getCurrentSongID, addTrackToPlaylist, getCurrentSong, searchByNameAndArtist } from './spotifyAPI';
 import { createOverlay, setLoggedInState, showOutput } from './windows';
 import { rating } from './utility';
 import Storage from './storage';
@@ -148,10 +148,22 @@ export async function recommendNextSong() {
     return;
   }
 
+  console.log("Trying to add to playlist")
+  if(!Storage.managedPlaylistId){
+    console.log("No managed playlist set")
+  }else{
+    var spotifySongID = await searchByNameAndArtist(result.title, result.artist)
+    try{
+      await addTrackToPlaylist(Storage.managedPlaylistId, spotifySongID)
+      console.log("Song added to playlist")
+    }catch(Error){
+      console.log("Recommended song not found")
+    }
+  }
+  
   // console.log("Trying to add to playlist");
   // await addTrackToPlaylist(Storage.managedPlaylistId, result);
 }
-
 
 
 // --- Window Management ---
