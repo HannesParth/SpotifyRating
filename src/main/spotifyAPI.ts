@@ -180,14 +180,14 @@ export async function returnTrack(spotifySongID: string) {
 // } //do not use spotifyAPI.methed for this, make direct spotify web api request
 
 // Search tracks whose artist's name contain artist and track name contains title
-export async function searchByNameAndArtist(title:string, artist:string) { //idk why this says I'm returning an undefined
+export async function searchByNameAndArtist(title:string, artist:string): Promise<string> {
   const both = 'track:'+title+' artist:'+artist
 
   var response = await spotifyApi.searchTracks(both);
 
-  if(!response){
+  if(!response.body.tracks){
     console.log('Was not able to find song of title '+ title+ ' from artist: ' + artist);
-    return null
+    throw new Error("Search of title and artist has no results") //how do I do better than an error
   }else{
     console.log('Found song id ' + response.body.tracks?.items[0].id)
     return response.body.tracks?.items[0].id
