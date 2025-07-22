@@ -1,61 +1,44 @@
-import os
 import pandas as pd
 import numpy as np
 import ast
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
-from typing import List, Dict, Optional,Any
-import warnings
-import random
+from typing import List, Dict, Optional, Any
 import json
-import re
-
-def parse_sections_start(x):
-    if isinstance(x, str) and x.startswith("[") and "]" in x:
-        try:
-            # Remove brackets, split by whitespace
-            nums = x.strip("[]").split()
-            # Convert to float
-            return [float(n) for n in nums]
-        except Exception as e:
-            return []
-    return x if isinstance(x, list) else []
-
+import warnings
 warnings.filterwarnings("ignore")
 
-# === File path ===
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SONG_DATA_PATH = os.path.join(BASE_DIR, "msd_processed.csv")
+# === CSV Dataset Path ===
+SONG_DATA_PATH = "msd_processed.csv"
 
-# === Load and clean CSV ===
+# === Load CSV ===
 df = pd.read_csv(SONG_DATA_PATH)
-df["sections_start"] = df["sections_start"].apply(parse_sections_start)
 
-LIST_COLUMNS = [
-    'segments_loudness_max', 'segments_loudness_max_time', 'segments_loudness_start',
-    'segments_pitches', 'segments_timbre',
-    'segments_start',
-    'sections_start'
-]
+# === Helper to parse stringified lists ===
 
 
 def safe_literal_eval(val):
     try:
-        if val is None:
-            return []
-        if isinstance(val, float) and pd.isna(val):
+        if val is None or (isinstance(val, float) and pd.isna(val)):
             return []
         if isinstance(val, str) and val.startswith('['):
             return ast.literal_eval(val)
-        return val  # already parsed or not a list-like string
-    except Exception as e:
+        return val
+    except Exception:
         return []
+
+
+# === Apply list parsing to relevant columns ===
+LIST_COLUMNS = [
+    'segments_loudness_max', 'segments_loudness_max_time', 'segments_loudness_start',
+    'segments_pitches', 'segments_timbre', 'segments_start', 'sections_start'
+]
 
 for col in LIST_COLUMNS:
     if col in df.columns:
         df[col] = df[col].apply(safe_literal_eval)
 
-# === Feature columns ===
+# === Audio Feature Columns ===
 AUDIO_FEATURE_COLUMNS = [
     'danceability', 'energy', 'time_signature', 'loudness',
     'song_hotttnesss', 'tempo', 'duration'
@@ -66,19 +49,18 @@ SEGMENT_COLUMNS = [
     'segments_pitches', 'segments_timbre'
 ]
 
-df['duration_raw'] = df['duration']
-
-# === Normalize audio features ===
+# === Normalize Features ===
 scaler = MinMaxScaler()
 df[AUDIO_FEATURE_COLUMNS] = scaler.fit_transform(df[AUDIO_FEATURE_COLUMNS])
 df[AUDIO_FEATURE_COLUMNS] = df[AUDIO_FEATURE_COLUMNS].fillna(0)
 
-
 # === Utility Functions ===
 
-def get_song_by_id(track_id: str) -> Optional[pd.Series]:
-    match = df[df['track_id'] == track_id]
-    return match.iloc[0] if not match.empty else None
+
+def find_song(title: str, artist: str) -> Optional[pd.Series]:
+    row = df[(df['title'].str.lower() == title.lower()) &
+             (df['artist'].str.lower() == artist.lower())]
+    return row.iloc[0] if not row.empty else None
 
 
 def get_song_vector(song: pd.Series) -> np.ndarray:
@@ -117,14 +99,15 @@ def compute_section_vector(song_row: pd.Series, section_index: int) -> Optional[
 def apply_feedback(feedback: List[Dict]) -> Optional[np.ndarray]:
     weighted_vectors = []
     weights = []
-    missing_tracks = []
+    missing_songs = []
 
     for entry in feedback:
-        track_id = entry['track_id']
-        song = get_song_by_id(track_id)
+        title = entry['title']
+        artist = entry['artist']
+        song = find_song(title, artist)
 
         if song is None:
-            missing_tracks.append(track_id)
+            missing_songs.append(f"{title} - {artist}")
             continue
 
         section_index = entry.get('segment_index')
@@ -149,11 +132,8 @@ def apply_feedback(feedback: List[Dict]) -> Optional[np.ndarray]:
             weighted_vectors.append(vec * weight)
             weights.append(abs(weight))
 
-    if missing_tracks:
-        print(
-            f"[WARN] {len(missing_tracks)} feedback track(s) not found in dataset:")
-        for tid in missing_tracks:
-            print(f"  - Missing track_id: {tid}")
+    if missing_songs:
+        print(f"[WARN] Missing songs in dataset: {missing_songs}")
 
     if not weighted_vectors:
         print("[WARN] No usable feedback vectors — returning None")
@@ -163,122 +143,105 @@ def apply_feedback(feedback: List[Dict]) -> Optional[np.ndarray]:
     norm = np.linalg.norm(avg_vector)
     return avg_vector / norm if norm > 0 else avg_vector
 
-def recommend_next_song(feedback: List[Dict]) -> Optional[str]:
+
+def recommend_next_song(feedback: List[Dict]) -> Optional[Dict[str, str]]:
     user_vec = apply_feedback(feedback)
 
     if user_vec is None or np.isnan(user_vec).any():
-        print("[INFO] No valid user vector for recommendation")
-        # fallback to random unrated song as before
-        unrated = df[~df['track_id'].isin(
-            {entry['track_id'] for entry in feedback})]
+        unrated = df[~df.apply(lambda row: any(
+            row['title'].lower() == f['title'].lower(
+            ) and row['artist'].lower() == f['artist'].lower()
+            for f in feedback
+        ), axis=1)]
         if not unrated.empty:
-            print("[INFO] Returning random unrated song because no valid user vector.")
-            return {
-                "title": unrated.sample(1).iloc[0]['title'],
-                "artist": unrated.sample(1).iloc[0]['artist'],
-                "result": "unrated"
-            }
-        print(
-            "[INFO] No recommendation could be made — dataset exhausted or empty feedback.")
+            fallback = unrated.sample(1).iloc[0]
+            return {"title": fallback['title'], "artist": fallback['artist']}
         return None
 
     feature_matrix = df[AUDIO_FEATURE_COLUMNS].to_numpy(dtype=np.float32)
-    if np.isnan(feature_matrix).any():
-        print("[WARN] Feature matrix contains NaNs, replacing with zeros")
-        feature_matrix = np.nan_to_num(feature_matrix)
-
-    if user_vec.shape[0] != feature_matrix.shape[1]:
-        user_vec = user_vec[:feature_matrix.shape[1]]
+    feature_matrix = np.nan_to_num(feature_matrix)
 
     similarities = cosine_similarity([user_vec], feature_matrix)[0]
-
     df['similarity'] = similarities
 
-    rated_ids = {entry['track_id'] for entry in feedback}
-    candidates = df[~df['track_id'].isin(rated_ids)]
+    rated_set = {(f['title'].lower(), f['artist'].lower()) for f in feedback}
+    candidates = df[~df.apply(
+        lambda row: (
+            isinstance(row.get("title"), str) and
+            isinstance(row.get("artist"), str) and
+            (row["title"].lower(), row["artist"].lower()) in rated_set
+        ),
+        axis=1
+    )]
 
     if candidates.empty:
-        print(
-            "[INFO] No candidates found for recommendation after excluding rated songs.")
         return None
 
     top = candidates.sort_values(by='similarity', ascending=False).iloc[0]
-    print(
-        f"[INFO] Recommended next song: {top['track_id']} - {top['title']} by {top['artist']}")
-    return {
-        "title": top['title'],
-        "artist": top['artist'],
-        "result": "recommended"
-    }
+    return {"title": top['title'], "artist": top['artist']}
 
 
-def get_sections_data(track_id: str) -> Dict[str, Any]:
-    song = get_song_by_id(track_id)
+def get_sections_data(title: str, artist: str) -> Dict[str, Any]:
+    song = find_song(title, artist)
     if song is not None and isinstance(song['sections_start'], list):
         return {
             "sections_start": song['sections_start'],
-            "duration": song.get('duration_raw', 0.0)
+            "duration": song.get('duration', 0.0)
         }
-    else:
-        print(f"[ERROR] Current song with track_id '{track_id}' not found in dataset.")
-        return {
-            "sections_start": [],
-            "duration": 0.0
-        }
-
-# === Main wrapper ===
-
-def recommend(current_track_id: str, playlist_feedback: List[Dict]) -> Dict:
     return {
-        "sections_start": get_sections_data(current_track_id),
+        "sections_start": [],
+        "duration": 0.0
+    }
+
+# === Entry Point ===
+
+
+def recommend(current_title: str, current_artist: str, playlist_feedback: List[Dict]) -> Dict[str, Any]:
+    return {
+        "sections_start": get_sections_data(current_title, current_artist),
         "recommended_song": recommend_next_song(playlist_feedback)
     }
 
-############################################################## Demo Code#############################################################
+####################################################################DEMO#########################################################
+
+
 # if __name__ == "__main__":
+#     print("=== CLI Demo: MSD Segment-Based Recommender ===\n")
 
-#     def pick_random_songs(df, count=3, exclude_track_id=None):
-#         candidates = df[df['track_id'] != exclude_track_id]
-#         return candidates.sample(count)
+#     # Step 1: Pick a current song that definitely exists
+#     current_song = df.sample(1).iloc[0]
+#     current_title = current_song['title']
+#     current_artist = current_song['artist']
+#     print(f"Picked current song: {current_title} by {current_artist}")
 
-#     def generate_random_feedback(songs_df):
-#         feedback = []
-#         for _, song in songs_df.iterrows():
-#             rating = random.choice([1, -1])
+#     # Step 2: Pick 3 feedback songs from MSD (excluding current)
+#     feedback_candidates = df[(df['title'] != current_title) | (
+#         df['artist'] != current_artist)].sample(3)
+#     feedback = []
 
-#             # Add segment-level feedback with 50% chance if sections are valid
-#             if isinstance(song.get('sections_start'), list) and len(song['sections_start']) > 1 and random.random() < 0.5:
-#                 seg_idx = 0  # you can randomize this too
-#                 seg_rate = rating
-#             else:
-#                 seg_idx = None
-#                 seg_rate = None
+#     for _, row in feedback_candidates.iterrows():
+#         seg_idx = 0
+#         if isinstance(row['sections_start'], list) and len(row['sections_start']) > 1:
+#             # pick section index safely
+#             seg_idx = min(1, len(row['sections_start']) - 1)
 
-#             feedback.append({
-#                 "track_id": song['track_id'],
-#                 "rating": rating,
-#                 "segment_index": seg_idx,
-#                 "segment_rating": seg_rate
-#             })
+#         feedback.append({
+#             "title": row['title'],
+#             "artist": row['artist'],
+#             "rating": 1,               # Whole-song feedback
+#             "segment_index": seg_idx,  # Treated as section index
+#             "segment_rating": 1        # Segment-level feedback
+#         })
 
-#         return feedback
-
-#     print("=== MSD Recommender CLI Demo (Fixed Song Input) ===\n")
-
-#     # === Use fixed track_id as current song ===
-#     current_track_id = "TRAXLZU12903D05F94"
-#     current_song = df[df['track_id'] == current_track_id].iloc[0]
-
-#     feedback_songs = pick_random_songs(
-#         df, 3, exclude_track_id=current_track_id)
-#     playlist_feedback = generate_random_feedback(feedback_songs)
-
+#     # Step 3: Print input to CLI
 #     print("\nInput:")
-#     print(f" Current playing song ID: {current_track_id}")
-#     print(" Cached playlist feedback:")
-#     print(json.dumps(playlist_feedback, indent=4))
+#     print(f"Current Song -> Title: {current_title}, Artist: {current_artist}")
+#     print("Feedback Playlist:")
+#     print(json.dumps(feedback, indent=4))
 
-#     result = recommend(current_track_id, playlist_feedback)
+#     # Step 4: Call the main function
+#     result = recommend(current_title, current_artist, feedback)
 
+#     # Step 5: Print output
 #     print("\nOutput:")
 #     print(json.dumps(result, indent=4))
