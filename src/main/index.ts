@@ -149,16 +149,22 @@ export async function recommendNextSong() {
   }
 
   console.log("Trying to add to playlist")
-  if(!Storage.managedPlaylistId){
-    console.log("No managed playlist set")
-  }else{
-    var spotifySongID = await searchByNameAndArtist(result.title, result.artist)
-    try{
-      await addTrackToPlaylist(Storage.managedPlaylistId, spotifySongID)
-      console.log("Song added to playlist")
-    }catch(Error){
-      console.log("Recommended song not found")
-    }
+  if (!Storage.managedPlaylistId){
+    console.log("No managed playlist set");
+    return;
+  } 
+
+  var spotifySongID = await searchByNameAndArtist(result.title, result.artist);
+  if (!spotifySongID) {
+    console.log("Not adding recommended song; no spotify ID found.");
+    return;
+  }
+
+  try {
+    await addTrackToPlaylist(Storage.managedPlaylistId, spotifySongID)
+    console.log("Song added to playlist")
+  } catch (err) {
+    console.log('Failed adding track to playlist. ', err);
   }
   
   // console.log("Trying to add to playlist");
