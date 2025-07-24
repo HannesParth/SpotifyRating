@@ -36,13 +36,15 @@ function isSongRated(track_id: string): boolean {
   const song = ratedSongsRAM.get(track_id);
   if (!song) return false;
   if (!song.rating) return false;
-  return song !== undefined && song.rating !== null;
+  return true;
 }
 
 function isSegmentRated(track_id: string): boolean {
-  return ratedSongsRAM.has(track_id) 
-    && ratedSongsRAM.get(track_id)?.segment_index !== null 
-    && ratedSongsRAM.get(track_id)?.segment_rating !== null
+  const song = ratedSongsRAM.get(track_id);
+  if (!song) return false;
+  if (!song.segment_index) return false;
+  if (!song.segment_rating) return false;
+  return true;
 }
 
 function getSongRating(track_id: string): rating | null {
@@ -52,10 +54,10 @@ function getSongRating(track_id: string): rating | null {
   return song.rating
 }
 
-function getSegmentRating(track_id: string): {segment_index: number, segment_rating: number} | null{
+function getSegmentRating(track_id: string): {segment_index: number, segment_rating: rating} | null{
   if (!isSegmentRated(track_id)) return null;
 
-  const song: RatedSong = ratedSongsRAM[track_id];
+  const song: RatedSong = ratedSongsRAM.get(track_id)!;
   return {
     segment_index: song.segment_index!,
     segment_rating: song.segment_rating!
@@ -64,10 +66,10 @@ function getSegmentRating(track_id: string): {segment_index: number, segment_rat
 
 function getOrMakeRatedSong(track: SpotifyApi.TrackObjectFull): RatedSong {
   const track_id: string = track.id;
-  if (!ratedSongsRAM.has(track_id)) {
-    return new RatedSong(track);
+  if (ratedSongsRAM.has(track_id)) {
+    return ratedSongsRAM.get(track_id)!;
   } else {
-    return ratedSongsRAM[track_id];
+    return new RatedSong(track);
   }
 }
 

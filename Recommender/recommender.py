@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 import numpy as np
 import ast
 from sklearn.metrics.pairwise import cosine_similarity
@@ -9,7 +10,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # === CSV Dataset Path ===
-SONG_DATA_PATH = "msd_processed.csv"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SONG_DATA_PATH = os.path.join(BASE_DIR, "msd_processed.csv")
 
 # === Load CSV ===
 df = pd.read_csv(SONG_DATA_PATH)

@@ -22,8 +22,6 @@ if (process.contextIsolated) {
       resizeInfoPopup: (width: number, height: number, id: number) => ipcRenderer.invoke('resize-info-popup', width, height, id),
       rateCurrentSong: (rating: rating) => ipcRenderer.invoke('rate-current-song', rating),
       rateCurrentSongSegment: (rating: rating, seg_index: number) => ipcRenderer.invoke('rate-segment', rating, seg_index),
-      isSongRatingAllowed: () => ipcRenderer.invoke('is-song-rating-allowed'),
-      isSegmentRatingAllowed: () => ipcRenderer.invoke('is-segment-rating-allowed'),
       callTest: () => ipcRenderer.invoke('test-button-call'),
     });
   } catch (error) {

@@ -15,8 +15,6 @@ declare global {
       resizeInfoPopup: (width: number, height: number, id: number) => Promise,
       rateCurrentSong: (rating: rating) => Promise,
       rateCurrentSongSegment: (rating: rating, seg_index: number) => Promise,
-      isSongRatingAllowed: () => Promise<boolean>,
-      isSegmentRatingAllowed: () => Promise<boolean>,
       callTest: () => Promise,
     }
   }

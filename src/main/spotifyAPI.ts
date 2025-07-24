@@ -3,7 +3,7 @@ import { URL } from "url";
 import { app, shell } from "electron";
 import { writeFileSync, readFileSync } from 'fs'
 import path from "path";
-import { setLoggedInState, showOutput } from "./windows";
+import { setLoggedInState, setSegments, showOutput } from "./windows";
 import Storage from "./storage";
 
 // To read more about the used package: https://www.npmjs.com/package/spotify-web-api-node?activeTab=readme
@@ -335,7 +335,7 @@ async function getAuthCode(): Promise<string> {
       spotifyApi.setAccessToken(access_token);
       spotifyApi.setRefreshToken(refresh_token);
 
-      console.log('Access Token:', access_token);
+      console.log('Got Access Token');
 
       res.writeHead(200, { "Content-Type": "text/html" });
       res.end("<h1>Login successful. You can now close the window.</h1>");

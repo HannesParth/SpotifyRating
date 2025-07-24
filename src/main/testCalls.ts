@@ -8,7 +8,7 @@ export function registerHandler(): void {
     // --- Test Button ---
     ipcMain.handle('test-button-call', async () => {
         // put any test calls here
-        await loadPython();
+        segmentTest();
     });
 }
 

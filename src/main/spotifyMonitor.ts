@@ -2,9 +2,11 @@
 import { getCurrentSongID, isTrackLastOfPlaylist } from './spotifyAPI';
 import Storage from "./storage";
 import { rating } from './utility';
+import { setSegments } from './windows';
 
 type Callback = () => void;
 type RatingCallback = (rating: rating) => void;
+type SegmentRatingCallback = (index: number, rating: rating) => void;
 
 let lastPlayingState = false;
 let songInterval: NodeJS.Timeout | null = null;
@@ -12,6 +14,7 @@ let onPlaying: Callback = () => {};
 let onNotPlaying: Callback = () => {};
 let onLast: Callback = () => {};
 let onRated: RatingCallback;
+let onSegRated: SegmentRatingCallback;
 
 
 export function startSongPlayingCheck(
@@ -19,12 +22,14 @@ export function startSongPlayingCheck(
   onNoSongPlaying: Callback,
   onLastSongPlaying: Callback,
   onSongRated: RatingCallback,
+  onSegmentRated: SegmentRatingCallback,
   pollInterval: number = 5000
 ): void {
   onPlaying = onSongPlaying;
   onNotPlaying = onNoSongPlaying;
   onLast = onLastSongPlaying;
   onRated = onSongRated;
+  onSegRated = onSegmentRated;
 
   songInterval = setInterval(async () => {
     let songId: string | null = null;
@@ -45,12 +50,17 @@ export function startSongPlayingCheck(
 
     if (!songId) {
       onRated(0);
+      onSegRated(0, 0);
       return;
     }
 
     // --- check if the current song is rated ---
     const rating = Storage.getSongRating(songId);
     rating ? onRated(rating) : onRated(0);
+
+    // --- check if a segment of the current song is rated ---
+    const segRating = Storage.getSegmentRating(songId);
+    segRating ? onSegRated(segRating.segment_index, segRating.segment_rating) : onSegRated(0, 0);
 
     // --- check if the current song is the last one of the managed playlist ---
     try {

@@ -41,7 +41,7 @@ function SongRate(): React.JSX.Element {
     <div className="song-rate-div">
       <button 
         className="song-rate-plus" 
-        style={{ border: songRating === 1 ? '2px solid #00792aff' : 'none' }}
+        style={{ outline: songRating === 1 ? '2px solid #bbffd3ff' : 'none' }}
         onClick={handlePlus} 
         disabled={!signedIn || !songPlaying}
       >
@@ -49,7 +49,7 @@ function SongRate(): React.JSX.Element {
       </button>
       <button 
         className="song-rate-minus" 
-        style={{ border: songRating === -1 ? '2px solid #670000ff' : 'none' }}
+        style={{ outline: songRating === -1 ? '2px solid #ffbdbdff' : 'none' }}
         onClick={handleMinus} 
         disabled={!signedIn || !songPlaying}
       >

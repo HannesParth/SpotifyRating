@@ -79,7 +79,7 @@ ipcMain.handle('rate-current-song', async (_, rating: rating) => {
   }
 
   Storage.addSongRating(song, rating);
-  console.log("Rated current song: ", song, ", with rating: ", rating);
+  console.log("Rated current song: ", song.name, ", with rating: ", rating);
 });
 
 ipcMain.handle('rate-segment', async (_, rating: rating, seg_index: number) => {
@@ -87,8 +87,10 @@ ipcMain.handle('rate-segment', async (_, rating: rating, seg_index: number) => {
   if (!song) return;
 
   Storage.addSegmentRating(song, seg_index, rating);
-  console.log(`Rated song [${song.id}], segment [${seg_index}], with rating [${rating}]`);
+  console.log(`Rated song [${song.name}], segment [${seg_index}], with rating [${rating}]`);
 });
+
+
 
 
 
@@ -125,22 +127,36 @@ function isRecommendationAnswer(obj: any): obj is RecommendationAnswer {
   );
 }
 
+const simRec: RecommendationAnswer[] = [
+  { title: "Invisible", artist: "NTO", result: "recommended" },
+  { title: "A New Error", artist: "Moderat", result: "recommended" },
+  { title: "Day One", artist: "Stereoclip", result: "recommended" },
+  { title: "Salzburg", artist: "Worakls", result: "recommended" },
+  { title: "Jennesys", artist: "Emrod", result: "recommended" },
+  { title: "Spiral - Edit", artist: "Philipp Wolf", result: "recommended" },
+  { title: "Behind Me", artist: "Teho", result: "recommended" },
+  { title: "The Year After", artist: "French 79", result: "recommended" },
+  { title: "Sol Invictus", artist: "Joachim Pastor", result: "recommended" },
+];
+
 export async function recommendNextSong() {
   console.log("\nRecommending song now");
 
-  if (!pymodule) {
-    console.error("Loading recommender python module failed");
-    return;
-  }
+  // commented out because recommendation is simulated
+  // if (!pymodule) {
+  //   console.error("Loading recommender python module failed");
+  //   return;
+  // }
   
   const songId = await getCurrentSongID();
   if (!songId) {
     return;
   }
   const ratedSongs = Storage.getForExport();
-  console.log("Recommender gets: \n", ratedSongs);
   
-  const result = await py.call(pymodule, "recommend_next_song", ratedSongs);
+  //const result = await py.call(pymodule, "recommend_next_song", ratedSongs);
+  // simulate recommendation
+  const result = simRec.pop();
   console.log("Got recommendation: ", result, " when playing song ", songId);
 
   if (!isRecommendationAnswer(result)) {
@@ -166,9 +182,6 @@ export async function recommendNextSong() {
   } catch (err) {
     console.log('Failed adding track to playlist. ', err);
   }
-  
-  // console.log("Trying to add to playlist");
-  // await addTrackToPlaylist(Storage.managedPlaylistId, result);
 }
 
 

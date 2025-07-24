@@ -8,6 +8,11 @@ type Segment = {
   to: number;   // i.e. 0.12
 };
 
+type SegmentRating = {
+  index: number;
+  rating: -1 | 0 | 1;
+}
+
 function showOutput(msg: string): void {
     window.electron.ipcRenderer.send('display-output', msg);
 }
@@ -18,9 +23,10 @@ function SegmentBar(): React.JSX.Element {
   const [popupPosition, setPopupPosition] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
   const [lastIndex, setLastIndex] = useState<number | undefined>(undefined);
 
-  // --- Checks: Signed in and Song Playing ---
+  // --- Checks ---
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [songPlaying, setSongPlaying] = useState<boolean | null>(null);
+  const [segmentRating, setSegmentRating] = useState<SegmentRating | null>(null);
 
   useEffect(() => {
     window.electron.ipcRenderer.on('set-sign-in-state', (_: any, state: boolean) => {
@@ -31,6 +37,14 @@ function SegmentBar(): React.JSX.Element {
   useEffect(() => {
     window.electron.ipcRenderer.on('set-song-playing', (_: any, state: boolean) => {
       setSongPlaying(state);
+    });
+  }, []);
+
+  useEffect(() => {
+    window.electron.ipcRenderer.on('set-segment-rating', (_: any, index: number, rating: number) => {
+      if (rating !== 1 && rating !== 0 && rating !== -1) return;
+
+      setSegmentRating({ index: index, rating: rating});
     });
   }, []);
 
@@ -55,14 +69,6 @@ function SegmentBar(): React.JSX.Element {
 
   // --- Button Calls ---
   const handleSegmentSelect = async (index: number) => {
-    // if rating is not allowed (i.e. a segment has already been rated), don't show popup
-    const allowed = await window.backend.isSegmentRatingAllowed();
-    if (!allowed) {
-      setLastIndex(undefined);
-      setShowPopup(false);
-      return;
-    }
-
     // if the same index was selected before, just show and hide the popup
     if (index === lastIndex) {
       setShowPopup(!showPopup);
@@ -104,13 +110,13 @@ function SegmentBar(): React.JSX.Element {
     <div style={{ 
       position: 'relative', 
       width: '100%', height: '100%', 
-      backgroundColor: 'black',
+      backgroundColor: 'grey',
       borderRadius: '4px'
       }}>
       {signedIn && songPlaying && (
         <div style={{
           position: 'absolute',
-          bottom: 0,
+          bottom: 1,
           left: 0,
           right: 0,
           height: '8px',
@@ -121,6 +127,15 @@ function SegmentBar(): React.JSX.Element {
 
           const isLast = index === segments.length - 1;
 
+          let outline = 'none';
+          if (segmentRating && segmentRating.index === index) {
+            if (segmentRating.rating === 1) {
+              outline = '3px solid #1db954';
+            } else if (segmentRating.rating === -1) {
+              outline = '3px solid #b91d1dff'
+            }
+          }
+
           return (
             <button
               key={index}
@@ -128,6 +143,7 @@ function SegmentBar(): React.JSX.Element {
               className='segment'
               style={{
                 position: 'absolute',
+                outline,
                 left: `calc(${leftPercent}%)`,
                 width: isLast
                   ? `${widthPercent}%`
@@ -142,11 +158,19 @@ function SegmentBar(): React.JSX.Element {
         <div className="song-rate-div" style={{
           position: 'absolute',
           left: popupPosition.left,
-          bottom: '8px',
+          bottom: '9px',
           transform: 'translateX(-50%)',
         }}>
-            <button className="song-rate-plus" onClick={handlePlus}>+</button>
-            <button className="song-rate-minus" onClick={handleMinus}>-</button>
+            <button 
+              className="song-rate-plus" 
+              onClick={handlePlus}
+              style={{ outline: !!segmentRating && segmentRating.rating === 1 ? '2px solid #bbffd3ff' : 'none' }}
+            >+</button>
+            <button 
+              className="song-rate-minus" 
+              onClick={handleMinus}
+              style={{ outline: !!segmentRating && segmentRating.rating === -1 ? '2px solid #ffbdbdff' : 'none' }}
+            >-</button>
         </div>
       )}
     </div>

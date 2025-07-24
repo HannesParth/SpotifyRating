@@ -55,7 +55,7 @@ export function createOverlay(): void {
   }
   loginOverlay = createOverlayWindow(115, 46, '70%', '1%');
   songRateOverlay = createOverlayWindow(70, 35, '26%', '94%');
-  outputOverlay = createOverlayWindow(300, 200, '80%', '70%');
+  //outputOverlay = createOverlayWindow(300, 200, '80%', '70%');
   setPlaylistOverlay = createOverlayWindow(
     setPlaylistButtonSize.width, 
     setPlaylistButtonSize.height, 
@@ -64,7 +64,7 @@ export function createOverlay(): void {
   segmentBarOverlay = createOverlayWindow(
     segmentBarSize.width, 
     segmentBarSize.height, 
-    'center', '98.5%'
+    'center', '86%'
   );
 
   if (is.dev) {
@@ -73,7 +73,7 @@ export function createOverlay(): void {
     }
     loginOverlay.loadURL(`${devURL}/login.html`);
     songRateOverlay.loadURL(`${devURL}/songRate.html`);
-    outputOverlay.loadURL(`${devURL}/outputWindow.html`);
+    //outputOverlay.loadURL(`${devURL}/outputWindow.html`);
     setPlaylistOverlay.loadURL(`${devURL}/setPlaylist.html`);
     segmentBarOverlay.loadURL(`${devURL}/segmentBar.html`);
   } else {
@@ -82,6 +82,7 @@ export function createOverlay(): void {
     }
     loginOverlay.loadFile(join(__dirname, "../renderer/login.html"));
     songRateOverlay.loadFile(join(__dirname, "../renderer/songRate.html"));
+    // TODO output overlay
     songRateOverlay.loadFile(join(__dirname, "../renderer/outputWindow.html"));
     setPlaylistOverlay.loadFile(join(__dirname, "../renderer/setPlaylist.html"));
     segmentBarOverlay.loadFile(join(__dirname, "../renderer/segmentBar.html"));
@@ -100,7 +101,8 @@ export function createOverlay(): void {
       () => setSongPlayingState(true), 
       () => setSongPlayingState(false), 
       recommendNextSong,
-      setSongRating
+      setSongRating,
+      setSegmentRating
     );
     segmentBarStartY = segmentBarOverlay.getPosition()[1];
   });
@@ -129,7 +131,7 @@ if (showTestButton) {
 
 
 export function showOutput(msg: string): void {
-  outputOverlay.webContents.send('display-output', msg);
+  //outputOverlay.webContents.send('display-output', msg);
 }
 
 
@@ -157,6 +159,10 @@ export function setSongRating(rating: rating): void {
   songRateOverlay.webContents.send('set-song-rating', rating);
 }
 
+export function setSegmentRating(index: number, rating: rating): void {
+  segmentBarOverlay.webContents.send('set-segment-rating', index, rating);
+}
+
 /**
  * Example call: <br>
  * setSegments([
@@ -176,7 +182,7 @@ export function setSegments(segments: { from: number, to: number }[]): void {
 
 // Bridge between any other windows and the output window
 ipcMain.on('display-output', (_, errorMessage) => {
-  outputOverlay.webContents.send('display-output', errorMessage);
+  //outputOverlay.webContents.send('display-output', errorMessage);
 });
 
 
