@@ -12,7 +12,7 @@ import { rating } from './utility';
 const showTestButton: boolean = true;
 export let testButton: BrowserWindow;
 
-
+const showOutputOverlay: boolean = true;
 export let outputOverlay: BrowserWindow;
 export let loginOverlay: BrowserWindow;
 export let songRateOverlay: BrowserWindow;
@@ -55,7 +55,9 @@ export function createOverlay(): void {
   }
   loginOverlay = createOverlayWindow(115, 46, '70%', '1%');
   songRateOverlay = createOverlayWindow(70, 35, '26%', '94%');
-  //outputOverlay = createOverlayWindow(300, 200, '80%', '70%');
+  if (showOutputOverlay) {
+    outputOverlay = createOverlayWindow(300, 200, '80%', '70%');
+  }
   setPlaylistOverlay = createOverlayWindow(
     setPlaylistButtonSize.width, 
     setPlaylistButtonSize.height, 
@@ -73,7 +75,9 @@ export function createOverlay(): void {
     }
     loginOverlay.loadURL(`${devURL}/login.html`);
     songRateOverlay.loadURL(`${devURL}/songRate.html`);
-    //outputOverlay.loadURL(`${devURL}/outputWindow.html`);
+    if (showOutputOverlay) {
+      outputOverlay.loadURL(`${devURL}/outputWindow.html`);
+    }
     setPlaylistOverlay.loadURL(`${devURL}/setPlaylist.html`);
     segmentBarOverlay.loadURL(`${devURL}/segmentBar.html`);
   } else {
@@ -82,13 +86,14 @@ export function createOverlay(): void {
     }
     loginOverlay.loadFile(join(__dirname, "../renderer/login.html"));
     songRateOverlay.loadFile(join(__dirname, "../renderer/songRate.html"));
-    // TODO output overlay
-    songRateOverlay.loadFile(join(__dirname, "../renderer/outputWindow.html"));
+    if (showOutputOverlay) {
+      outputOverlay.loadFile(join(__dirname, "../renderer/outputWindow.html"));
+    }
     setPlaylistOverlay.loadFile(join(__dirname, "../renderer/setPlaylist.html"));
     segmentBarOverlay.loadFile(join(__dirname, "../renderer/segmentBar.html"));
   }
 
-  allNonPopups.push(loginOverlay);
+  if (showOutputOverlay) allNonPopups.push(loginOverlay);
   allNonPopups.push(songRateOverlay);
   allNonPopups.push(outputOverlay);
   allNonPopups.push(setPlaylistOverlay);
@@ -131,7 +136,7 @@ if (showTestButton) {
 
 
 export function showOutput(msg: string): void {
-  //outputOverlay.webContents.send('display-output', msg);
+  if (showOutputOverlay) outputOverlay.webContents.send('display-output', msg);
 }
 
 
@@ -182,7 +187,7 @@ export function setSegments(segments: { from: number, to: number }[]): void {
 
 // Bridge between any other windows and the output window
 ipcMain.on('display-output', (_, errorMessage) => {
-  //outputOverlay.webContents.send('display-output', errorMessage);
+  if (showOutputOverlay) outputOverlay.webContents.send('display-output', errorMessage);
 });
 
 
