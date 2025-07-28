@@ -142,11 +142,10 @@ const simRec: RecommendationAnswer[] = [
 export async function recommendNextSong() {
   console.log("\nRecommending song now");
 
-  // commented out because recommendation is simulated
-  // if (!pymodule) {
-  //   console.error("Loading recommender python module failed");
-  //   return;
-  // }
+  if (!pymodule) {
+    console.error("Loading recommender python module failed");
+    return;
+  }
   
   const songId = await getCurrentSongID();
   if (!songId) {
@@ -154,13 +153,13 @@ export async function recommendNextSong() {
   }
   const ratedSongs = Storage.getForExport();
   
-  //const result = await py.call(pymodule, "recommend_next_song", ratedSongs);
+  const result = await py.call(pymodule, "recommend_next_song", ratedSongs);
   // simulate recommendation
-  const result = simRec.pop();
+  //const result = simRec.pop();
   console.log("Got recommendation: ", result, " when playing song ", songId);
 
   if (!isRecommendationAnswer(result)) {
-    console.log("Recommendation result was not a string");
+    console.log("Recommendation result was not a RecommendationAnswer object");
     return;
   }
 

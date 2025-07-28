@@ -151,13 +151,13 @@ def recommend_next_song(feedback: List[Dict]) -> Optional[Dict[str, str]]:
 
     if user_vec is None or np.isnan(user_vec).any():
         unrated = df[~df.apply(lambda row: any(
-            row['title'].lower() == f['title'].lower(
-            ) and row['artist'].lower() == f['artist'].lower()
+            str(row['title']).lower() == str(f['title']).lower()
+            and str(row['artist']).lower() == str(f['artist']).lower()
             for f in feedback
         ), axis=1)]
         if not unrated.empty:
             fallback = unrated.sample(1).iloc[0]
-            return {"title": fallback['title'], "artist": fallback['artist']}
+            return {"title": fallback['title'], "artist": fallback['artist'], "result": "unrated"}
         return None
 
     feature_matrix = df[AUDIO_FEATURE_COLUMNS].to_numpy(dtype=np.float32)
@@ -180,7 +180,7 @@ def recommend_next_song(feedback: List[Dict]) -> Optional[Dict[str, str]]:
         return None
 
     top = candidates.sort_values(by='similarity', ascending=False).iloc[0]
-    return {"title": top['title'], "artist": top['artist']}
+    return {"title": top['title'], "artist": top['artist'], "result": "recommended"}
 
 
 def get_sections_data(title: str, artist: str) -> Dict[str, Any]:

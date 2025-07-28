@@ -66,7 +66,7 @@ export function createOverlay(): void {
   segmentBarOverlay = createOverlayWindow(
     segmentBarSize.width, 
     segmentBarSize.height, 
-    'center', '86%'
+    'center', '83%'
   );
 
   if (is.dev) {
