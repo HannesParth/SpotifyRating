@@ -51,12 +51,15 @@ export function startSongPlayingCheck(
     if (!songId) {
       onRated(0);
       onSegRated(0, 0);
+      //setSegments(null);
       return;
     }
 
     // --- check if the current song is rated ---
     const rating = Storage.getSongRating(songId);
     rating ? onRated(rating) : onRated(0);
+
+    // --- get the segment data of the current song ---
 
     // --- check if a segment of the current song is rated ---
     const segRating = Storage.getSegmentRating(songId);

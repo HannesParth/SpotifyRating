@@ -52,6 +52,11 @@ function SegmentBar(): React.JSX.Element {
   // --- Set Segments ---
   useEffect(() => {
     window.electron.ipcRenderer.on('set-segments', (_: any, newSegments: Segment[]) => {
+      if (!newSegments) {
+        setSegments([]);
+        return;
+      }
+      
       const total = newSegments.reduce((sum, seg) => sum + (seg.to - seg.from), 0);
       if (total < 0.95 || total > 1.05) {
         showOutput('Segment sum not within [95%, 105%]: ' + total);
@@ -110,7 +115,8 @@ function SegmentBar(): React.JSX.Element {
     <div style={{ 
       position: 'relative', 
       width: '100%', height: '100%', 
-      backgroundColor: 'grey',
+      backgroundColor: 'black',
+      outline: '2px sold #08411cff',
       borderRadius: '4px'
       }}>
       {signedIn && songPlaying && (

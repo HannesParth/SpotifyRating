@@ -1,44 +1,49 @@
-# Notes
-electron-vite "Getting Started": https://electron-vite.org/guide/
+# Rate Support
+
+An Electron application with React and TypeScript. Made as an overlay for Spotify to enable users to rate songs and song segments, resulting in better recommendations.
+
+
+## Architecture and usage
+This project works in three parts:
+1. The electron-vite desktop app
+2. Requests to the [Spotify Web API](https://developer.spotify.com/documentation/web-api)
+3. A content-feature based recommender using a snippet of the [Million Song Dataset](http://millionsongdataset.com/)
+
+The Electron "backend" can be found in `src/main`.
+The various UI elements can be found in `src/renderer`.
+The recommender can be found in `Recommender`.
+
+The Output Window and Test button can be enabled/disabled at the top of `src/main/windows.ts`.
+Due to problems most likely caused by the [node-calls-python package](www.npmjs.com/package/node-calls-python), the Segment Bar does currently not display the actual song segments. 
+To test the UI elements themselves, the Test button in its current setup can be used to 
+1. show example segments
+2. try to get the segment data from the MSD and see that in the terminal
+
+
+The initial plan was for the recommender to use the [Audio Features](https://developer.spotify.com/documentation/web-api/reference/get-audio-features) and [Audio Analysis](https://developer.spotify.com/documentation/web-api/reference/get-audio-analysis) endpoints of the web api, before we noticed that these have been deprecated for commercial reasons several months ago. 
+We then pivoted to use the Million Song Dataset (MSD) instead, which comes with some problems.
+- The track_ids in the MSD are not the same as the ones from current Spotify
+- The MSD does not contain every song currently on Spotify, and we had to shorten our snippet of it even more to upload it to GitHub without LFS
+
+Other problems were caused by Electron making it *possible* to create multiple transparent windows without borders, but clearly not having the best support for it. Hence, all the Electron windows flicker with a grey title bar when deselected (see the bottom of `src/main/index.ts` for that workaround) and the Segment Bar hat to be placed a good bit above Spotify's song controls for it to not inexplicably vanish or block a bigger space than its root element covers.
+
+## Project Setup
+This project is using electron-vite: https://electron-vite.org/guide/
 On making an app with multiple windows: https://electron-vite.org/guide/dev#multiple-windows-app
 
 Vite Overview: https://vite.dev/guide/#overview
 
-### Setup of a local repos (off  the top of my head)
-1. Clone this repository using a method of your choice
-2. Make sure Node v.20+ is installed
-3. Open the project folder in VS Code
-4. Open a new Terminal in VS Code
-5. Run `npm install`
-6. After that ran through and and no errors popped up, you should be able to run `npm run dev` to run the app with (mostly) functioning hot-reloading
+**Prerequisites to run this project:**
+- Node version >=20 (currently using v22.16.0)
+- A global Python 3.10 installation (I was unable to get this [package](www.npmjs.com/package/node-calls-python) to work using environments or user-specific installations)
+- The Python packages pandas, numpy and scikit-learn installed in that global Python installation
 
 
-
-### Setup of new electron-vite app
-1. Make sure Node v.20+ is installed
-2. Open the Terminal in VS Code after navigating to the project folder
-3. Run the latest electron-vite setup: npm create @quick-start/electron@latest
-4. Agree to installing the @quick-start/create-electron package
-5. Choose react + typescript in the installation choices
-6. Set a project name (I have "spotify-rating")
-7. Add Electron updater plugin? -> Yes
-8. Enable Electron download mirror proxy? -> Yes
-9. Follow the given commands (use `cd` to navigate to new project directory, run `npm install` and `npm run dev`)
+After cloning this repository, run `npm install`.
+After that `npm run dev` should work.
+**This project has not been tested as a production build.**
 
 
-
-
-
-# spotify-rating
-
-An Electron application with React and TypeScript
-
-## Recommended IDE Setup
-
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
- -> I've removed Prettier because gave me a bunch of warnings that were literally unfixable
-
-## Project Setup
 
 ### Install
 

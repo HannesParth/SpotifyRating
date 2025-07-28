@@ -169,6 +169,7 @@ export function setSegmentRating(index: number, rating: rating): void {
 }
 
 /**
+ * Give null as parameter to remove current segments.
  * Example call: <br>
  * setSegments([
     { from: 0, to: 0.15},
@@ -177,7 +178,7 @@ export function setSegmentRating(index: number, rating: rating): void {
     { from: 0.74, to: 1 },
   ]);
  */
-export function setSegments(segments: { from: number, to: number }[]): void {
+export function setSegments(segments: { from: number, to: number }[] | null): void {
   segmentBarOverlay.webContents.send('set-segments', segments);
 }
 

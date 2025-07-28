@@ -233,33 +233,10 @@ export async function getCurrentSongID(): Promise<string | null> {
   if (!spotifyApi.getAccessToken()) {
     return null;
   }
-  const response = await spotifyApi.getMyCurrentPlaybackState();
+  const fullTrack = await getCurrentSong();
+  if (!fullTrack) return null;
 
-  if (!response.body) {
-    return null;
-  }
-  if (!response.body.item) {
-    console.warn("getCurrentSong: item was null");
-    return null;
-  }
-  if (!response.body.context || (response.body.context && response.body.context.type !== "playlist")) {
-    console.warn("getCurrentSong: user is not in a playlist");
-    return null;
-  }
-
-  const songID: string = response.body.item.id;
-  const playlistUri = response.body.context.uri;
-  const playlistId = playlistUri.split(':')[2];
-
-  if (!Storage.managedPlaylistId) {
-    console.warn("getCurrentSong: managed Playlist not set");
-    return null;
-  }
-  if (playlistId !== Storage.managedPlaylistId) {
-    console.warn("Current song is not in managed playlist");
-    return null;
-  }
-  return songID;
+  return fullTrack.id;
 }
 
 export async function getCurrentSong(): Promise<SpotifyApi.TrackObjectFull | null> {
@@ -297,7 +274,7 @@ export async function getCurrentSong(): Promise<SpotifyApi.TrackObjectFull | nul
 }
 
 
-export async function getCurrentPlayingSong(): Promise<string | null> {
+export async function getCurrentPlayingSongId(): Promise<string | null> {
   const response = await spotifyApi.getMyCurrentPlayingTrack();
   const playingObj = response.body.item;
 

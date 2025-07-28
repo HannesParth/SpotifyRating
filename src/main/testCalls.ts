@@ -1,7 +1,7 @@
 import { ipcMain } from "electron";
 import { setSegments, setSongPlayingState } from "./windows";
 import { getAllPlaylistSongs, getCurrentSongID, isTrackLastOfPlaylist } from "./spotifyAPI";
-import { loadPythonModule } from "./index";
+import { getSongSegments, loadPythonModule } from "./index";
 
 
 export function registerHandler(): void {
@@ -9,6 +9,8 @@ export function registerHandler(): void {
     ipcMain.handle('test-button-call', async () => {
         // put any test calls here
         segmentTest();
+        await getSongSegments();
+        console.log("Also current test: calling getSongSegments");
     });
 }
 

@@ -127,17 +127,20 @@ function isRecommendationAnswer(obj: any): obj is RecommendationAnswer {
   );
 }
 
-const simRec: RecommendationAnswer[] = [
-  { title: "Invisible", artist: "NTO", result: "recommended" },
-  { title: "A New Error", artist: "Moderat", result: "recommended" },
-  { title: "Day One", artist: "Stereoclip", result: "recommended" },
-  { title: "Salzburg", artist: "Worakls", result: "recommended" },
-  { title: "Jennesys", artist: "Emrod", result: "recommended" },
-  { title: "Spiral - Edit", artist: "Philipp Wolf", result: "recommended" },
-  { title: "Behind Me", artist: "Teho", result: "recommended" },
-  { title: "The Year After", artist: "French 79", result: "recommended" },
-  { title: "Sol Invictus", artist: "Joachim Pastor", result: "recommended" },
-];
+type SegmentAnswer = {
+  sections_start: number[],
+  duration: number
+}
+
+function isSegmentAnswer(obj: any): obj is SegmentAnswer {
+  return (
+    obj &&
+    typeof obj === "object" &&
+    Array.isArray(obj.sections_start) &&
+    obj.sections_start.every((x: any) => typeof x === "number") &&
+    typeof obj.duration === "number"
+  )
+}
 
 export async function recommendNextSong() {
   console.log("\nRecommending song now");
@@ -154,8 +157,6 @@ export async function recommendNextSong() {
   const ratedSongs = Storage.getForExport();
   
   const result = await py.call(pymodule, "recommend_next_song", ratedSongs);
-  // simulate recommendation
-  //const result = simRec.pop();
   console.log("Got recommendation: ", result, " when playing song ", songId);
 
   if (!isRecommendationAnswer(result)) {
@@ -181,6 +182,29 @@ export async function recommendNextSong() {
   } catch (err) {
     console.log('Failed adding track to playlist. ', err);
   }
+}
+
+export async function getSongSegments(): Promise<{ from: number, to: number }[] | null> {
+  const track = await getCurrentSong();
+  if (!track) return null;
+
+  if (!pymodule) {
+    console.error("Loading recommender python module failed");
+    return null;
+  }
+
+  const title = track.name;
+  const artist = track.artists[0].name;
+
+  const result = await py.call(pymodule, "get_sections_data", title, artist);
+  console.log("Got segment answer: \n", result);
+
+  if (!isSegmentAnswer(result)) {
+    console.log("Segment data result was not a SegmentAnswer");
+    return null;
+  }
+
+  return [];
 }
 
 

@@ -188,7 +188,8 @@ def get_sections_data(title: str, artist: str) -> Dict[str, Any]:
     if song is not None and isinstance(song['sections_start'], list):
         return {
             "sections_start": song['sections_start'],
-            "duration": song.get('duration', 0.0)
+            "duration": float(song.get('duration', 0.0)),
+            "title": song.get('title', ""),
         }
     return {
         "sections_start": [],
