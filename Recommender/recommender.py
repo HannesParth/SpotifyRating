@@ -185,7 +185,7 @@ def recommend_next_song(feedback: List[Dict]) -> Optional[Dict[str, str]]:
 
 def get_sections_data(title: str, artist: str) -> Dict[str, Any]:
     song = find_song(title, artist)
-    if song is not None and isinstance(song['sections_start'], list):
+    if song is not None and isinstance(song['sections_start'], (str, list)):
         if str(song['sections_start']).startswith('['):
             # Split the string into a list of substrings and convert each substring to a float. Idk how it treats the 0. string
             section_start_fl = list(map(float, (str(song['sections_start']).strip("[]")).split()))
