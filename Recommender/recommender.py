@@ -186,11 +186,24 @@ def recommend_next_song(feedback: List[Dict]) -> Optional[Dict[str, str]]:
 def get_sections_data(title: str, artist: str) -> Dict[str, Any]:
     song = find_song(title, artist)
     if song is not None and isinstance(song['sections_start'], list):
+        if str(song['sections_start']).startswith('['):
+            # Split the string into a list of substrings and convert each substring to a float. Idk how it treats the 0. string
+            section_start_fl = list(map(float, (str(song['sections_start']).strip("[]")).split()))
+            print("song[sections_start] from py get_sections_data function is"+ section_start_fl)
+            print("song duration from py get_sections_data function is"+ float(song.get('duration', 0.0)))
+            return {
+            "sections_start": section_start_fl,
+            "duration": float(song.get('duration', 0.0)),
+            "title": song.get('title', ""),
+        }
+        print("song[sections_start] from py get_sections_data function is"+ song['sections_start'])
+        print("song duration from py get_sections_data function is"+ float(song.get('duration', 0.0)))
         return {
             "sections_start": song['sections_start'],
             "duration": float(song.get('duration', 0.0)),
             "title": song.get('title', ""),
         }
+    print("No section for song of title"+ title)
     return {
         "sections_start": [],
         "duration": 0.0
