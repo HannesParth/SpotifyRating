@@ -2,6 +2,9 @@
 
 An Electron application with React and TypeScript. Made as an overlay for Spotify to enable users to rate songs and song segments, resulting in better recommendations.
 
+Here you can see it in action with the dev UI elements enabled:
+![The Rate Support UI on top of the Spotify desktop application. Shows the Login/Logout, SetPlaylist, Test, Rate Song and Rate Song Segment Buttons, as well as the Segment Bar above the Spotify song controls.](./screenshots/Rate_Support_Full.png)
+
 
 ## Architecture and usage
 This project works in three parts:
