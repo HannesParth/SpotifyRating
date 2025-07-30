@@ -129,7 +129,8 @@ function isRecommendationAnswer(obj: any): obj is RecommendationAnswer {
 
 type SegmentAnswer = {
   sections_start: number[],
-  duration: number
+  duration: number,
+  title: string
 }
 
 function isSegmentAnswer(obj: any): obj is SegmentAnswer {
@@ -138,7 +139,8 @@ function isSegmentAnswer(obj: any): obj is SegmentAnswer {
     typeof obj === "object" &&
     Array.isArray(obj.sections_start) &&
     obj.sections_start.every((x: any) => typeof x === "number") &&
-    typeof obj.duration === "number"
+    typeof obj.duration === "number" &&
+    typeof obj.title === 'string'
   )
 }
 
@@ -197,14 +199,26 @@ export async function getSongSegments(): Promise<{ from: number, to: number }[] 
   const artist = track.artists[0].name;
 
   const result = await py.call(pymodule, "get_sections_data", title, artist);
-  console.log("Got segment answer: \n", result);
+  //console.log("Got segment answer: \n", result);
 
   if (!isSegmentAnswer(result)) {
     console.log("Segment data result was not a SegmentAnswer");
+    console.log(result);
     return null;
   }
 
-  return [];
+  const relativeStarts = result.sections_start.map(start => Number((start / result.duration).toFixed(2)));
+  const relativeSegments = relativeStarts.slice(0, -1).map((from, i) => ({
+    from,
+    to: relativeStarts[i + 1]
+  }));
+  const lastTo = relativeSegments[relativeSegments.length - 1]?.to ?? 0;
+  if (lastTo < 0.98) {
+    relativeSegments.push({ from: lastTo, to: 1 });
+  }
+  //console.log(`Got ${relativeSegments.length} relative segments for song ${result.title} and `, relativeSegments);
+
+  return relativeSegments;
 }
 
 

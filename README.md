@@ -17,10 +17,8 @@ The various UI elements can be found in `src/renderer`.
 The recommender can be found in `Recommender`.
 
 The Output Window and Test button can be enabled/disabled at the top of `src/main/windows.ts`.
-Due to problems most likely caused by the [node-calls-python package](www.npmjs.com/package/node-calls-python), the Segment Bar does currently not display the actual song segments. 
-To test the UI elements themselves, the Test button in its current setup can be used to 
-1. show example segments
-2. try to get the segment data from the MSD and see that in the terminal
+
+**Important**: To actually get a recommendation and song segments, you have to wait until the message "finished loading python module" shows up in the Output window and the terminal.
 
 
 The initial plan was for the recommender to use the [Audio Features](https://developer.spotify.com/documentation/web-api/reference/get-audio-features) and [Audio Analysis](https://developer.spotify.com/documentation/web-api/reference/get-audio-analysis) endpoints of the web api, before we noticed that these have been deprecated for commercial reasons several months ago. 

@@ -9,7 +9,7 @@ import { recommendNextSong } from '.';
 import { rating } from './utility';
 
 
-const showTestButton: boolean = true;
+const showTestButton: boolean = false;
 export let testButton: BrowserWindow;
 
 const showOutputOverlay: boolean = true;

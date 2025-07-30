@@ -1,4 +1,5 @@
 // src/main/spotifyMonitor.ts
+import { getSongSegments } from '.';
 import { getCurrentSongID, isTrackLastOfPlaylist } from './spotifyAPI';
 import Storage from "./storage";
 import { rating } from './utility';
@@ -60,6 +61,11 @@ export function startSongPlayingCheck(
     rating ? onRated(rating) : onRated(0);
 
     // --- get the segment data of the current song ---
+    const segments = await getSongSegments();
+    if (segments) {
+      console.log("Attempting to set segments for current song")
+      setSegments(segments);
+    }
 
     // --- check if a segment of the current song is rated ---
     const segRating = Storage.getSegmentRating(songId);

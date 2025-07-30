@@ -14,8 +14,20 @@ type SegmentRating = {
 }
 
 function showOutput(msg: string): void {
-    window.electron.ipcRenderer.send('display-output', msg);
+  window.electron.ipcRenderer.send('display-output', msg);
 }
+
+function segmentsAreEqual(a: Segment[], b: Segment[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].from !== b[i].from || a[i].to !== b[i].to) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
 
 function SegmentBar(): React.JSX.Element {
   const [segments, setSegments] = useState<Segment[]>([]);
@@ -54,6 +66,7 @@ function SegmentBar(): React.JSX.Element {
     window.electron.ipcRenderer.on('set-segments', (_: any, newSegments: Segment[]) => {
       if (!newSegments) {
         setSegments([]);
+        showOutput("New segments are null");
         return;
       }
       
@@ -62,6 +75,12 @@ function SegmentBar(): React.JSX.Element {
         showOutput('Segment sum not within [95%, 105%]: ' + total);
         return;
       }
+
+      if (segmentsAreEqual(newSegments, segments)) {
+        showOutput("New segments are equal to old ones");
+        return;
+      }
+
       setSegments(newSegments);
       showOutput(`Setting ${newSegments.length} segments`);
     });
